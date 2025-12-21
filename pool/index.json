@@ -1,0 +1,10 @@
+{
+  "libdeflate": {
+    "version": "1.0.2",
+    "digest": "e7996283470463c0f778463619cf75e72c7de7f70e80706de74b48605dddeb3a"
+  },
+  "lockbox": {
+    "version": "d91607d",
+    "digest": "8b1fc972d26fc88fa40ec9d362811d3c10d425060abc22442086331cb89b44a3"
+  }
+}
