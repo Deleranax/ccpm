@@ -113,7 +113,7 @@ do
         local lib, minor = LibStub:GetLibrary(_MAJOR, true)
         if lib and minor and minor >= _MINOR then -- No need to update.
             return lib
-        else                                  -- Update or first time register
+        else                                      -- Update or first time register
             LibDeflate = LibStub:NewLibrary(_MAJOR, _MINOR)
             -- NOTE: It is important that new version has implemented
             -- all exported APIs and tables in the old version,
@@ -658,14 +658,14 @@ end
 		Number. The maximum number of hash chains we look.
 --]]
 local _compression_level_configs = {
-    [0] = { false, nil, 0, 0, 0 },  -- level 0, no compression
-    [1] = { false, nil, 4, 8, 4 },  -- level 1, similar to zlib level 1
-    [2] = { false, nil, 5, 18, 8 }, -- level 2, similar to zlib level 2
-    [3] = { false, nil, 6, 32, 32 }, -- level 3, similar to zlib level 3
-    [4] = { true, 4, 4, 16, 16 },   -- level 4, similar to zlib level 4
-    [5] = { true, 8, 16, 32, 32 },  -- level 5, similar to zlib level 5
-    [6] = { true, 8, 16, 128, 128 }, -- level 6, similar to zlib level 6
-    [7] = { true, 8, 32, 128, 256 }, -- (SLOW) level 7, similar to zlib level 7
+    [0] = { false, nil, 0, 0, 0 },      -- level 0, no compression
+    [1] = { false, nil, 4, 8, 4 },      -- level 1, similar to zlib level 1
+    [2] = { false, nil, 5, 18, 8 },     -- level 2, similar to zlib level 2
+    [3] = { false, nil, 6, 32, 32 },    -- level 3, similar to zlib level 3
+    [4] = { true, 4, 4, 16, 16 },       -- level 4, similar to zlib level 4
+    [5] = { true, 8, 16, 32, 32 },      -- level 5, similar to zlib level 5
+    [6] = { true, 8, 16, 128, 128 },    -- level 6, similar to zlib level 6
+    [7] = { true, 8, 32, 128, 256 },    -- (SLOW) level 7, similar to zlib level 7
     [8] = { true, 32, 128, 258, 1024 }, -- (SLOW) level 8,similar to zlib level 8
     [9] = { true, 32, 258, 258, 4096 }
     -- (VERY SLOW) level 9, similar to zlib level 9
@@ -1546,7 +1546,7 @@ local function GetDynamicHuffmanBlockSize(lcodes, dcodes, HCLEN,
         local code = lcodes[i]
         local huffman_bitlen = lcodes_huffman_bitlens[code]
         block_bitlen = block_bitlen + huffman_bitlen
-        if code > 256 then              -- Length code
+        if code > 256 then                    -- Length code
             length_code_count = length_code_count + 1
             if code > 264 and code < 285 then -- Length code with extra bits
                 local extra_bits_bitlen = _literal_deflate_code_to_extra_bitlen[code -
@@ -1579,7 +1579,7 @@ local function CompressDynamicHuffmanBlock(WriteBits, is_last_block, lcodes,
                                            dcodes_huffman_bitlens,
                                            dcodes_huffman_codes)
     WriteBits(is_last_block and 1 or 0, 1) -- Last block identifier
-    WriteBits(2, 2)                      -- Dynamic Huffman block identifier
+    WriteBits(2, 2)                        -- Dynamic Huffman block identifier
 
     WriteBits(HLIT, 5)
     WriteBits(HDIST, 5)
@@ -1649,7 +1649,7 @@ local function GetFixedHuffmanBlockSize(lcodes, dcodes)
         local code = lcodes[i]
         local huffman_bitlen = _fix_block_literal_huffman_bitlen[code]
         block_bitlen = block_bitlen + huffman_bitlen
-        if code > 256 then              -- Length code
+        if code > 256 then                    -- Length code
             length_code_count = length_code_count + 1
             if code > 264 and code < 285 then -- Length code with extra bits
                 local extra_bits_bitlen = _literal_deflate_code_to_extra_bitlen[code -
@@ -1674,7 +1674,7 @@ end
 local function CompressFixedHuffmanBlock(WriteBits, is_last_block, lcodes,
                                          lextra_bits, dcodes, dextra_bits)
     WriteBits(is_last_block and 1 or 0, 1) -- Last block identifier
-    WriteBits(1, 2)                      -- Fixed Huffman block identifier
+    WriteBits(1, 2)                        -- Fixed Huffman block identifier
     local length_code_count = 0
     local length_code_with_extra_count = 0
     local dist_code_with_extra_count = 0
@@ -1732,7 +1732,7 @@ local function CompressStoreBlock(WriteBits, WriteString, is_last_block, str,
                                   block_start, block_end, total_bitlen)
     assert(block_end - block_start + 1 <= 65535)
     WriteBits(is_last_block and 1 or 0, 1) -- Last block identifer.
-    WriteBits(0, 2)                      -- Store block identifier.
+    WriteBits(0, 2)                        -- Store block identifier.
     total_bitlen = total_bitlen + 3
     local padding_bitlen = (8 - total_bitlen % 8) % 8
     if padding_bitlen > 0 then
@@ -1968,7 +1968,7 @@ end
 local function CompressZlibInternal(str, dictionary, configs)
     local WriteBits, WriteString, FlushWriter = CreateWriter()
 
-    local CM = 8  -- Compression method
+    local CM = 8    -- Compression method
     local CINFO = 7 -- Window Size = 32K
     local CMF = CINFO * 16 + CM
     WriteBits(CMF, 8)
@@ -2308,7 +2308,7 @@ local function GetHuffmanForDecode(huffman_bitlens, max_symbol, max_bitlen)
     end
 
     if huffman_bitlen_counts[0] == max_symbol + 1 then -- No Codes
-        return 0, huffman_bitlen_counts, {}, 0       -- Complete, but decode will fail
+        return 0, huffman_bitlen_counts, {}, 0         -- Complete, but decode will fail
     end
 
     local left = 1
@@ -2561,7 +2561,7 @@ local function DecompressDynamicBlock(state)
                 symbol = 3 + ReadBits(2)
             elseif symbol == 17 then -- Repeat zero 3..10 times
                 symbol = 3 + ReadBits(3)
-            else               -- == 18, repeat zero 11.138 times
+            else                     -- == 18, repeat zero 11.138 times
                 symbol = 11 + ReadBits(7)
             end
             if index + symbol > nlen + ndist then

@@ -8,6 +8,7 @@ import zlib
 PACKAGES_ROOT_SRC_DIR = "./packages"
 PACKAGES_SRC_DIR = "source"
 MANIFEST_FILE = "manifest.json"
+MANIFEST_FIELDS = ["license", "authors", "maintainers", "version", "dependencies"]
 PACKAGES_POOL_DIR = "./pool"
 INDEX_FILE = "index.json"
 
@@ -21,7 +22,8 @@ def get_package_files(name):
     rtn = []
 
     for root, _, files in os.walk(path):
-        rtn.extend(map(lambda file: root.removeprefix(path) + "/" + file, files))
+        root_path = "" if root == path else root.removeprefix(path) + "/"
+        rtn.extend(map(lambda file: root_path + file, files))
 
     return rtn
 
@@ -33,9 +35,17 @@ def get_manifest(name):
 
     try:
         with open(path) as file:
-            return json.load(file)
+            manifest = json.load(file)
+
+            for key in MANIFEST_FIELDS:
+                if key not in manifest:
+                    print(f"[!] Package manifest is incomplete (missing '{key}')")
+
+            return manifest
     except FileNotFoundError:
         print("[!] Package is invalid (no manifest)")
+    except json.JSONDecodeError:
+        print("[!] Package is invalid (unreadable manifest)")
 
 
 def build_package(name):
@@ -84,6 +94,11 @@ def write_package(name):
 
 
 if __name__ == "__main__":
+    try:
+        os.makedirs(PACKAGES_POOL_DIR)
+    except:
+        pass
+
     packages = {}
 
     for package in get_all_packages():

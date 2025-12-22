@@ -1,10 +1,1 @@
-{
-  "libdeflate": {
-    "version": "1.0.2",
-    "digest": "e7996283470463c0f778463619cf75e72c7de7f70e80706de74b48605dddeb3a"
-  },
-  "lockbox": {
-    "version": "d91607d",
-    "digest": "8b1fc972d26fc88fa40ec9d362811d3c10d425060abc22442086331cb89b44a3"
-  }
-}
+{"libdeflate": {"version": "1.0.2", "digest": "b420196c759d6e9bee25d9284124077884728c299d3b49964d11477abf7faff2"}, "libccpm": {"version": "0.1.0", "digest": "9a7f53a337e50169150a23e4f0fcd91fd2aebad43cbc79f7460c16914dd9770a"}, "lockbox": {"version": "d91607d", "digest": "6beb22c12888d3dca451f9766d7d86ab07bc58f929c068816a33c123c12d042d"}}

@@ -1,6 +1,7 @@
 {
-  "version": "d91607d",
   "license": "MIT",
   "authors": ["somesocks"],
-  "maintainer": ["Alexandre Leconte"]
+  "maintainers": ["Alexandre Leconte"],
+  "version": "d91607d",
+  "dependencies": []
 }
