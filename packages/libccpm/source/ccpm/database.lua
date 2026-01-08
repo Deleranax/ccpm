@@ -66,6 +66,8 @@ end
 
 --- Load local storage.
 function database.load()
+    os.queueEvent("ccpm_loading")
+
     repositories_index = load_or_backup(REPOSITORIES_INDEX_FILE, repositories_index)
     packages_index = load_or_backup(PACKAGES_INDEX_FILE, packages_index)
     packages_database = load_or_backup(PACKAGES_DATABASE_FILE, packages_database)
@@ -74,6 +76,8 @@ end
 
 --- Save local storage.
 function database.save()
+    os.queueEvent("ccpm_saving")
+
     if not fs.exists(STORAGE_DIR) then
         fs.makeDir(STORAGE_DIR)
     end
@@ -84,27 +88,31 @@ function database.save()
     save(TRANSACTION_FILE, transaction)
 end
 
---- Get the repositories index.
--- @return table: A table representing the repository index.
+--- Get repositories index instance.
+-- @return table: A table representing the repositories index.
 function database.get_repositories_index()
+    return repositories_index
 end
 
---- Get the packages index.
+--- Get packages index instance.
 -- @return table: A table representing the packages index.
-function database.packages_index()
+function database.get_packages_index()
     return packages_index
 end
 
---- Get the packages database.
+--- Get packages database instance.
 -- @return table: A table representing the packages database.
 function database.get_packages_database()
     return packages_database
 end
 
---- Get current transaction.
--- @return table or nil: A table representing the transaction or nil.
-function database.get_transaction()
+--- Get transaction instance.
+-- @return table: A table representing the transaction.
+function database.get_transaction_index()
     return transaction
 end
+
+-- Load database at startup.
+database.load()
 
 return database

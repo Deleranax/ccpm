@@ -5,9 +5,9 @@ local expect = require("cc.expect")
 local package = {}
 
 --- Unpack a CCPM package (.ccp).
--- @param package_path string: Pathname for the package file.
--- @param output string: Pathname for the output directory.
--- @return table or (nil, string): A table representing the manifest or nil and an error message.
+--- @param package_path string: Pathname for the package file.
+--- @param output string: Pathname for the output directory.
+--- @return table | nil, nil | string: A table representing the manifest or nil and an error message.
 function package.unpack(package_path, output)
     expect.expect(1, package_path, "string")
     expect.expect(2, output, "string")

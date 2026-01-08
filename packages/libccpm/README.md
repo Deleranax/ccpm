@@ -4,7 +4,9 @@
 
 CCPM generates a lot of events in order to make the usage of the package manager interractive.
 
-| Event name                | Description                                                       | Resolution                                                        |
+| Event name                | Description                                                       | Arguments                                                         |
 |:-------------------------:|:-----------------------------------------------------------------:|:-----------------------------------------------------------------:|
-| `ccpm_backup`             | Created backup of unparsable storage file  (path in arg1).        | N/A                                                               |
-| `ccpm_not_saved`          | Could not save storage file (path in arg1).                       | Free space on disk, change path and call `database.save()` again. |
+| `ccpm_loading`            | Loading local database.                                           | N/A                                                               |
+| `ccpm_backup`             | Created backup of unparsable storage file.                        | [1] File path                                                     |
+| `ccpm_saving`             | Saving local database.                                            | N/A                                                               |
+| `ccpm_not_saved`          | Could not save storage file.                                      | [1] File path                                                     |

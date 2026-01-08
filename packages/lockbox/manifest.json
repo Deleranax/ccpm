@@ -1,7 +1,8 @@
 {
+  "description": "Library for encrypting and decrypting data",
   "license": "MIT",
   "authors": ["somesocks"],
   "maintainers": ["Alexandre Leconte"],
-  "version": "d91607d",
+  "version": "1.d91607d",
   "dependencies": []
 }

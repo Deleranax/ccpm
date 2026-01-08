@@ -1,8 +1,8 @@
 {
-  "description": "Library for CCPM",
+  "description": "HTTP driver for CCPM",
   "license": "GPL-3.0-or-later",
   "authors": ["Alexandre Leconte"],
   "maintainers": ["Alexandre Leconte"],
   "version": "0.1.0",
-  "dependencies": ["libdeflate", "lockbox"]
+  "dependencies": []
 }

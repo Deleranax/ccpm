@@ -1,4 +1,5 @@
 {
+  "description": "Library for deflating and inflating data",
   "license": "Zlib",
   "authors": ["Haoqian He"],
   "maintainers": ["Alexandre Leconte"],
