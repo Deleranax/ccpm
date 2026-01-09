@@ -1,11 +1,11 @@
 local expect = require("cc.expect")
 
-local http = {}
+local httpd = {}
 
 --- Check if the given URL is compatible with the HTTP driver.
 --- @param url string: The URL to check.
 --- @return boolean: True if the URL is compatible, false otherwise.
-function http.can_handle(url)
+function httpd.can_handle(url)
     expect.expect(1, url, "string")
 
     return url:match("^https?://") ~= nil
@@ -14,8 +14,8 @@ end
 --- Retrieve the manifest from the given URL.
 --- @param url string: The URL to retrieve the manifest from.
 --- @return table | nil, nil | string: A table representing the manifest or an error message.
-function http.get_manifest(url)
-    if not http.can_handle(url) then
+function httpd.get_manifest(url)
+    if not httpd.can_handle(url) then
         return nil, "URL is not compatible with the HTTP driver"
     end
 
@@ -40,7 +40,7 @@ end
 --- Retrieve the packages index with the given repository manifest.
 --- @param manifest table: The manifest table.
 --- @return table | nil, nil | string: A table representing the packages index or an error message.
-function http.get_packages_index(manifest)
+function httpd.get_packages_index(manifest)
     expect.expect(1, manifest, "table")
 
     local response = http.get(manifest.url .. "/pool/index.json")
@@ -60,7 +60,7 @@ end
 --- @param manifest table: The manifest table.
 --- @param filename string: The name of the package file.
 --- @return string | nil, nil | string: The package content or an error message.
-function http.get_package(manifest, filename)
+function httpd.get_package(manifest, filename)
     expect.expect(1, manifest, "table")
     expect.expect(2, filename, "string")
 
@@ -71,3 +71,5 @@ function http.get_package(manifest, filename)
 
     return response.readAll(), nil
 end
+
+return httpd

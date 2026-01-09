@@ -1,5 +1,6 @@
 local uuid = require("uuid")
 local ctable = require("commons.ctable")
+local expect = require("cc.expect")
 
 local database = {}
 
@@ -23,7 +24,7 @@ local function load_or_backup(path, fallback)
 
         local data = file.readAll()
         if data == nil then
-            error("Could not read storage file: " .. path)
+            error("could not read storage file: " .. path)
         end
         file.close()
 
@@ -41,6 +42,8 @@ local function load_or_backup(path, fallback)
         end
 
         return data
+    else
+        return fallback
     end
 end
 
@@ -126,10 +129,12 @@ end
 --- @param repository table: A table representing the repository.
 --- @return string | nil, string | nil: The local ID of the repository, or nil and an error message if the repository already exists.
 function database.add_repository(repository)
+    expect.expect(1, repository, "table")
+
     -- Check if the repository already exists
     for id, repo in pairs(repositories_index) do
         if repo.url == repository.url then
-            return nil, "Repository already exists (" .. id .. ")"
+            return nil, "repository already exists (" .. id .. ")"
         end
     end
 
@@ -146,7 +151,7 @@ end
 --- @return boolean | nil, string | nil: True if the repository was updated, or nil and an error message if the repository does not exist.
 function database.update_repository(id, repository)
     if not repositories_index[id] then
-        return nil, "Repository not found"
+        return nil, "repository not found"
     end
 
     repositories_index[id] = ctable.copy(repository)
@@ -160,7 +165,7 @@ end
 --- @return boolean | nil, string | nil: True if the repository was deleted, or nil and an error message if the repository does not exist.
 function database.delete_repository(id)
     if not repositories_index[id] then
-        return nil, "Repository not found"
+        return nil, "repository not found"
     end
 
     repositories_index[id] = nil
@@ -171,7 +176,7 @@ end
 
 --- List all repositories.
 --- @return table | nil, string | nil: A table of repositories, or nil and an error message if the database cannot be loaded.
-function database.list_repositories()
+function database.get_repositories()
     local repositories = {}
     for id, repository in pairs(repositories_index) do
         table.insert(repositories, ctable.copy(repository))

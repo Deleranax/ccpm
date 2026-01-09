@@ -58,4 +58,7 @@ table.insert(package.loaders, online_require)
 -- Begin install
 local repo = require("ccpm.repository")
 
-repo.add(CCPM_BASE_URL)
+local err = repo.add(CCPM_BASE_URL)
+if err then
+    error(err)
+end

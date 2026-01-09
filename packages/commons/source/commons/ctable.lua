@@ -1,11 +1,11 @@
 local ctable = {}
 
 --- Copy a table recursively.
---- @param table table: The table to copy.
+--- @param tab table: The table to copy.
 --- @return table: A deep copy of the table.
-function ctable.copy(table)
+function ctable.copy(tab)
     local new_table = {}
-    for k, v in pairs(table) do
+    for k, v in pairs(tab) do
         if type(v) == "table" then
             v = ctable.copy(v)
         end
