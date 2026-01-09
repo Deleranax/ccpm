@@ -10,6 +10,9 @@ local PACKAGES_OVERRIDE = {
     ["ccpm.package"] = "libccpm"
 }
 
+--- Get the download URL for a module.
+--- @param name string The name of the module.
+--- @return string The download URL for the module.
 local function get_url(name)
     name = name:gsub("%/", ".")
 
@@ -27,16 +30,24 @@ local function get_url(name)
     return PACKAGES_URL .. package .. "/source/" .. table.concat(parts, "/") .. ".lua"
 end
 
+--- Load a module from the internet.
+--- @param name string The name of the module.
+--- @return function|nil The loaded module or nil if the module could not be loaded.
+--- @return string|nil The error message if the module could not be loaded.
 local function online_require(name)
+    write("Downloading module '" .. name .. "'... ")
     local url = get_url(name)
     local response = http.get(url)
     if response then
+        print("Done.")
         local code = response.readAll()
         response.close()
-        local chunk = load(code, "=" .. name)
+        local chunk = load(code, "=" .. name, "t", _ENV)
         if chunk then
             return chunk, nil
         end
+    else
+        print("Failed.")
     end
     return nil, "no file at '" .. url .. "'"
 end
@@ -47,4 +58,4 @@ table.insert(package.loaders, online_require)
 -- Begin install
 local repo = require("ccpm.repository")
 
-repo.add_repository(CCPM_BASE_URL)
+repo.add(CCPM_BASE_URL)
