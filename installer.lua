@@ -62,3 +62,8 @@ local err = repo.add(CCPM_BASE_URL)
 if err then
     error(err)
 end
+
+local err = repo.update_index()
+if err then
+    error(err)
+end

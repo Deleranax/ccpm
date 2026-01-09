@@ -1,11 +1,18 @@
 local database = require("ccpm.database")
+local expect = require("cc.expect")
 
 local repository = {}
 
 --- Get the driver for the repository
---- @param url string: Repository URL (any).
+--- @param url string | table: Repository URL or manifest.
 --- @return table | nil, nil | string: A table representing the driver or nil and an error message.
 function repository.get_driver(url)
+    expect.expect(1, url, "string", "table")
+
+    if type(url) == "table" then
+        url = url.url
+    end
+
     local driver = require("ccpm.driver." .. url:match("^([^/]+)://"))
     if not driver then
         return nil, "driver not found"
@@ -20,6 +27,8 @@ end
 --- @param url string: Repository URL (any).
 --- @return nil | string: Nil or an error message.
 function repository.add(url)
+    expect.expect(1, url, "string")
+
     local driver, err = repository.get_driver(url)
     if not driver then
         return err
@@ -56,27 +65,47 @@ end
 --- Update the index of all repositories.
 --- @return nil | string: Nil or an error message.
 function repository.update_index()
+    local repositories_index = {}
     local repositories = database.get_repositories()
-    if not repositories then
-        return "failed to get repositories"
-    end
 
-    for _, repository in ipairs(repositories) do
-        local driver, err = repository.get_driver(repository.url)
+    -- Download individual repositories packages index
+    os.queueEvent("ccpm_index_update_start", #repositories)
+    for id, repo in pairs(repositories) do
+        os.queueEvent("ccpm_index_updating", id)
+
+        local driver, err = repository.get_driver(repo)
         if not driver then
-            return "failed to get driver for repository: " .. err
+            err = "failed to get driver for repository: " .. err
+            os.queueEvent("ccpm_index_not_updated", id, err)
+            return err
         end
 
-        local manifest, err = driver.get_manifest(repository.url)
-        if not manifest then
-            return "failed to get manifest for repository: " .. err
+        local index, err = driver.get_packages_index(repo)
+        if not index then
+            err = "failed to get packages index for repository: " .. err
+            os.queueEvent("ccpm_index_not_updated", id, err)
+            return err
         end
 
-        local err = database.update_repository(repository.id, manifest)
-        if err then
-            return "failed to update repository: " .. err
+        repositories_index[id] = index
+        os.queueEvent("ccpm_index_updated", id)
+    end
+    os.queueEvent("ccpm_index_update_end")
+
+    local new_index = {}
+
+    -- Merge repositories index according to priority
+    for id, index in pairs(repositories_index) do
+        for name, manifest in pairs(index) do
+            if not new_index[name] or repositories[id].priority > repositories[id].priority then
+                new_index[name] = manifest
+                new_index[name].repository = id
+            end
         end
     end
+
+    -- Save merged index to database
+    database.set_packages_index(new_index)
 
     return nil
 end

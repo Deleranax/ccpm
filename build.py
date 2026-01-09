@@ -161,7 +161,10 @@ def repair_package_index():
                     packages[name] = {"description": "", "versions": {}}
 
                 packages[name]["description"] = package["manifest"]["description"]
-                packages[name]["versions"][version] = package["digest"]
+                packages[name]["versions"][version] = {
+                    "digest": package["digest"],
+                    "dependencies": package["manifest"]["dependencies"],
+                }
 
     return packages
 
@@ -192,9 +195,10 @@ if __name__ == "__main__":
                         packages[name] = {"description": "", "versions": {}}
 
                     packages[name]["description"] = package["manifest"]["description"]
-                    packages[name]["versions"][package["manifest"]["version"]] = (
-                        package["digest"]
-                    )
+                    packages[name]["versions"][package["manifest"]["version"]] = {
+                        "digest": package["digest"],
+                        "dependencies": package["manifest"]["dependencies"],
+                    }
         except Exception as e:
             print(f"Error: {e}")
             print("You can try to repair the package index using the --repair option.")
