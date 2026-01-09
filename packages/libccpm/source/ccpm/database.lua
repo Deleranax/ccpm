@@ -1,3 +1,6 @@
+local uuid = require("uuid")
+local ctable = require("commons.ctable")
+
 local database = {}
 
 local STORAGE_DIR = "/.data/ccpm/"
@@ -89,30 +92,107 @@ function database.save()
 end
 
 --- Get repositories index instance.
--- @return table: A table representing the repositories index.
+--- @return table: A table representing the repositories index.
 function database.get_repositories_index()
     return repositories_index
 end
 
 --- Get packages index instance.
--- @return table: A table representing the packages index.
+--- @return table: A table representing the packages index.
 function database.get_packages_index()
     return packages_index
 end
 
 --- Get packages database instance.
--- @return table: A table representing the packages database.
+--- @return table: A table representing the packages database.
 function database.get_packages_database()
     return packages_database
 end
 
 --- Get transaction instance.
--- @return table: A table representing the transaction.
+--- @return table | nil: A table representing the transaction, or nil if not found.
 function database.get_transaction_index()
     return transaction
 end
 
--- Load database at startup.
+--- Get repository instance.
+--- @param id string: The ID of the repository.
+--- @return table | nil: A table representing the repository, or nil if not found.
+function database.get_repository(id)
+    return repositories_index[id]
+end
+
+--- Add a new repository.
+--- @param repository table: A table representing the repository.
+--- @return string | nil, string | nil: The local ID of the repository, or nil and an error message if the repository already exists.
+function database.add_repository(repository)
+    -- Check if the repository already exists
+    for id, repo in pairs(repositories_index) do
+        if repo.url == repository.url then
+            return nil, "Repository already exists (" .. id .. ")"
+        end
+    end
+
+    local id = uuid.v4()
+    repositories_index[id] = ctable.copy(repository)
+
+    save(REPOSITORIES_INDEX_FILE, repositories_index)
+    return id, nil
+end
+
+--- Update an existing repository.
+--- @param id string: The ID of the repository.
+--- @param repository table: A table representing the repository.
+--- @return boolean | nil, string | nil: True if the repository was updated, or nil and an error message if the repository does not exist.
+function database.update_repository(id, repository)
+    if not repositories_index[id] then
+        return nil, "Repository not found"
+    end
+
+    repositories_index[id] = ctable.copy(repository)
+
+    save(REPOSITORIES_INDEX_FILE, repositories_index)
+    return true, nil
+end
+
+--- Delete an existing repository.
+--- @param id string: The ID of the repository.
+--- @return boolean | nil, string | nil: True if the repository was deleted, or nil and an error message if the repository does not exist.
+function database.delete_repository(id)
+    if not repositories_index[id] then
+        return nil, "Repository not found"
+    end
+
+    repositories_index[id] = nil
+
+    save(REPOSITORIES_INDEX_FILE, repositories_index)
+    return true, nil
+end
+
+--- List all repositories.
+--- @return table | nil, string | nil: A table of repositories, or nil and an error message if the database cannot be loaded.
+function database.list_repositories()
+    local repositories = {}
+    for id, repository in pairs(repositories_index) do
+        table.insert(repositories, ctable.copy(repository))
+    end
+    return repositories, nil
+end
+
+--- Search for repositories by URL.
+--- @param query string: The search query.
+--- @return table | nil, string | nil: A table of repositories, or nil and an error message if the database cannot be loaded.
+function database.search_repositories(query)
+    local repositories = {}
+    for id, repository in pairs(repositories_index) do
+        if string.find(repository.url, query, 1, true) then
+            table.insert(repositories, ctable.copy(repository))
+        end
+    end
+    return repositories, nil
+end
+
+-- Load database at require.
 database.load()
 
 return database

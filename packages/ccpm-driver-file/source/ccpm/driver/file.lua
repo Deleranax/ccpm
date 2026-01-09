@@ -5,7 +5,7 @@ local file = {}
 --- Check if the given URL is compatible with the file driver.
 --- @param url string: The URL to check.
 --- @return boolean: True if the URL is compatible, false otherwise.
-function file.is_url_compatible(url)
+function file.can_handle(url)
     expect.expect(1, url, "string")
 
     return url:match("^file://") ~= nil
@@ -15,7 +15,7 @@ end
 --- @param url string: The URL to retrieve the manifest from.
 --- @return table | nil, nil | string: A table representing the manifest or an error message.
 function file.get_manifest(url)
-    if not file.is_url_compatible(url) then
+    if not file.can_handle(url) then
         return nil, "URL is not compatible with the file driver"
     end
 

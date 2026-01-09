@@ -1,6 +1,6 @@
 {
-  "description": "HTTP driver for CCPM",
-  "license": "GPL-3.0-or-later",
+  "description": "Library for generating pseudo-random UUIDs (v4)",
+  "license": "MIT",
   "authors": ["Alexandre Leconte"],
   "maintainers": ["Alexandre Leconte"],
   "version": "1.0.0",

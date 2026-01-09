@@ -5,7 +5,7 @@ local http = {}
 --- Check if the given URL is compatible with the HTTP driver.
 --- @param url string: The URL to check.
 --- @return boolean: True if the URL is compatible, false otherwise.
-function http.is_url_compatible(url)
+function http.can_handle(url)
     expect.expect(1, url, "string")
 
     return url:match("^https?://") ~= nil
@@ -15,7 +15,7 @@ end
 --- @param url string: The URL to retrieve the manifest from.
 --- @return table | nil, nil | string: A table representing the manifest or an error message.
 function http.get_manifest(url)
-    if not http.is_url_compatible(url) then
+    if not http.can_handle(url) then
         return nil, "URL is not compatible with the HTTP driver"
     end
 

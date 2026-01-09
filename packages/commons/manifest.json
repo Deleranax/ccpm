@@ -1,8 +1,8 @@
 {
-  "description": "Library for CCPM",
+  "description": "A collection of common utilities and functions.",
   "license": "GPL-3.0-or-later",
   "authors": ["Alexandre Leconte"],
   "maintainers": ["Alexandre Leconte"],
   "version": "1.0.0",
-  "dependencies": ["libdeflate", "lockbox", "uuid", "commons"]
+  "dependencies": []
 }
