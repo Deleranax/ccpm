@@ -9,7 +9,7 @@ function repository.get_driver(url)
     local driver = require("ccpm.driver." + url:match("^([^/]+)://"))
     if not driver then
         return nil, "Driver not found"
-    else if not driver.can_handle(url) then
+    elseif not driver.can_handle(url) then
         return nil, "Driver cannot handle URL"
     end
 
