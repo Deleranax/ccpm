@@ -4,7 +4,10 @@ local CCPM_BASE_URL = "https://raw.githubusercontent.com/Deleranax/ccpm/refs/hea
 local PACKAGES_URL = CCPM_BASE_URL .. "packages/"
 local PACKAGES_OVERRIDE = {
     ["ccpm.driver.http"] = "ccpm-driver-http",
-    ["ccpm.driver.https"] = "ccpm-driver-http"
+    ["ccpm.driver.https"] = "ccpm-driver-http",
+    ["ccpm.repository"] = "libccpm",
+    ["ccpm.database"] = "libccpm",
+    ["ccpm.package"] = "libccpm"
 }
 
 local function get_url(name)
@@ -21,7 +24,7 @@ local function get_url(name)
         package = PACKAGES_OVERRIDE[path]
     end
 
-    return PACKAGES_URL .. package .. "/source/" .. table.concat(parts, "/") ".lua"
+    return PACKAGES_URL .. package .. "/source/" .. table.concat(parts, "/") .. ".lua"
 end
 
 local function online_require(name)
@@ -38,8 +41,8 @@ local function online_require(name)
     return nil, "no file at '" .. url .. "'"
 end
 
--- Add online_require to package searchers
-table.insert(package.searchers, online_require)
+-- Add online_require to package loaders
+table.insert(package.loaders, online_require)
 
 -- Begin install
 local repo = require("ccpm.repository")
