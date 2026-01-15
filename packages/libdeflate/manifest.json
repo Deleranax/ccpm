@@ -1,6 +1,8 @@
 {
-  "version": "1.0.2",
+  "description": "Library for deflating and inflating data",
   "license": "Zlib",
   "authors": ["Haoqian He"],
-  "maintainer": ["Alexandre Leconte"]
+  "maintainers": ["Alexandre Leconte <aleconte@dwightstudio.fr>"],
+  "version": "1.0.2",
+  "dependencies": []
 }
