@@ -1,5 +1,5 @@
 {
-  "description": "Smart relay for Rednet",
+  "description": "Router for Rednet packets",
   "license": "GPL-3.0-or-later",
   "authors": ["Alexandre Leconte <aleconte@dwightstudio.fr>"],
   "maintainers": ["Alexandre Leconte <aleconte@dwightstudio.fr>"],

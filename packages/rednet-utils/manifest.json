@@ -1,0 +1,8 @@
+{
+  "description": "Utilities for Rednet",
+  "license": "GPL-3.0-or-later",
+  "authors": ["Alexandre Leconte <aleconte@dwightstudio.fr>"],
+  "maintainers": ["Alexandre Leconte <aleconte@dwightstudio.fr>"],
+  "version": "1.0.0",
+  "dependencies": ["commons"]
+}

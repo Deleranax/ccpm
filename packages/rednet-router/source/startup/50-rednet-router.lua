@@ -1,5 +1,5 @@
 --[[
-    rednet-relay - Smart relay for Rednet
+    rednet-router - Router for Rednet packets
     Copyright (C) 2026  Alexandre Leconte <aleconte@dwightstudio.fr>
 
     This program is free software: you can redistribute it and/or modify
@@ -90,7 +90,7 @@ local function modem_handler(modem, channel, reply_channel, message)
         messages_timeout[os.startTimer(30)] = message.nMessageID
 
         local send_channel = message.nRecipient
-        if send_channel ~= rednet.CHANNEL_BROADCAST then
+        if send_channel ~= rednet.CHANNEL_BROADCAST and send_channel ~= rednet.CHANNEL_REPEAT then
             send_channel = id_as_channel(message.nRecipient)
         end
 
@@ -103,7 +103,11 @@ local function modem_handler(modem, channel, reply_channel, message)
                 if saved_side ~= modem then
                     print("[" .. ctextutils.pad(message.nSender, 5) .. "] " .. ctextutils.pad(modem, 5) ..
                         " --> " .. ctextutils.pad(saved_side, 5) .. " [" .. ctextutils.pad(message.nRecipient, 5) .. "]")
-                    modems[saved_side].transmit(send_channel, reply_channel, message)
+
+                    -- Check if it is a greet message
+                    if send_channel ~= rednet.CHANNEL_REPEAT then
+                        modems[saved_side].transmit(send_channel, reply_channel, message)
+                    end
                     modems[saved_side].transmit(rednet.CHANNEL_REPEAT, reply_channel, message)
                 end
                 return
@@ -117,7 +121,9 @@ local function modem_handler(modem, channel, reply_channel, message)
             " --> all   [" .. ctextutils.pad(message.nRecipient, 5) .. "]")
         for side, mod in pairs(modems) do
             if side ~= modem then
-                mod.transmit(send_channel, reply_channel, message)
+                if send_channel ~= rednet.CHANNEL_REPEAT then
+                    mod.transmit(send_channel, reply_channel, message)
+                end
                 mod.transmit(rednet.CHANNEL_REPEAT, reply_channel, message)
             end
         end
@@ -142,7 +148,6 @@ end)
 for side, modem in pairs(modems) do
     print("Opening modem " .. side)
     modem.open(rednet.CHANNEL_REPEAT)
-    modem.open(rednet.CHANNEL_BROADCAST)
 end
 
 while true do
