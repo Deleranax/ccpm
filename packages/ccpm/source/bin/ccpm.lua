@@ -24,6 +24,8 @@ local transaction = require("ccpm.transaction")
 local eventutils  = require("ccpm.eventutils")
 local args        = { ... }
 
+-- TODO: Add version specifier in the install command
+
 --- Print help message
 local function printHelp(args)
     if not args or #args == 0 then
