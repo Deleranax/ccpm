@@ -99,30 +99,38 @@ function repository.get_driver(url)
     return driver, nil
 end
 
---- Add a new repository.
---- @param url string: Repository URL (any).
---- @return nil | string: Nil or an error message.
-function repository.add(url)
-    expect.expect(1, url, "string")
+--- Get the manifest for the repository
+--- @param url string | table: Repository URL or manifest.
+--- @return table | nil, nil | string: A table representing the manifest or nil and an error message.
+function repository.fetch_manifest(url)
+    expect.expect(1, url, "string", "table")
+
+    if type(url) == "table" then
+        url = url.url
+    end
+
     local raw_url = repository.extract_raw_url(url)
 
     local driver, err = repository.get_driver(raw_url)
     if not driver then
-        return err
+        return nil, err
     end
 
     local manifest, err = driver.get_manifest(raw_url)
-    if type(manifest) ~= "table" then
-        return "failed to get manifest: " .. err
+    if not manifest then
+        return nil, err
     end
-    if type(manifest.url) ~= "string" then
-        return "incorrect manifest: missing URL"
-    end
-    if type(manifest.name) ~= "string" then
-        return "incorrect manifest: missing name"
-    end
-    if type(manifest.priority) ~= "number" then
-        return "incorrect manifest: missing priority"
+
+    return manifest, nil
+end
+
+--- Add a new repository.
+--- @param url string: Repository URL (any).
+--- @return nil | string: Nil or an error message.
+function repository.add(url)
+    local manifest, err = repository.fetch_manifest(url)
+    if not manifest then
+        return nil, err
     end
 
     local id, err = database.add_repository(manifest)
@@ -133,7 +141,7 @@ function repository.add(url)
     return nil
 end
 
---- Update the index of all repositories.
+--- Update the index and manifest of all repositories.
 --- @return nil | string: Nil or an error message.
 function repository.update()
     local repositories_index = {}
@@ -151,7 +159,19 @@ function repository.update()
             return err
         end
 
-        local index, err = driver.get_packages_index(repo)
+        local manifest, err = repository.fetch_manifest(repo)
+        if not manifest then
+            err = "failed to get manifest for repository: " .. err
+            event.dispatch("ccpm_index_not_updated", id, err)
+            return err
+        end
+        if manifest.url ~= repo.url or
+            manifest.name ~= repo.name or
+            manifest.priority ~= repo.priority then
+            database.update_repository(id, manifest)
+        end
+
+        local index, err = driver.get_packages_index(manifest)
         if not index then
             err = "failed to get packages index for repository: " .. err
             event.dispatch("ccpm_index_not_updated", id, err)

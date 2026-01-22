@@ -94,7 +94,7 @@ parallel.waitForAny(
             error(err)
         end
 
-        print("Updating index")
+        print("Updating index and manifests")
         err = repo.update()
         if err then
             error(err)

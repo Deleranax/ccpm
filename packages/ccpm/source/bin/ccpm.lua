@@ -48,7 +48,7 @@ local function printHelp(args)
         print("Uninstall packages. The query can be a complete name or a pattern.")
     elseif args[1] == "update" then
         print("Usage: ccpm update")
-        print("Update package index.")
+        print("Update package index and repositories manifests.")
     elseif args[1] == "upgrade" then
         print("Usage: ccpm upgrade [query1] [query2] ...")
         print("Upgrade packages. The query can be a complete name or a pattern.")
