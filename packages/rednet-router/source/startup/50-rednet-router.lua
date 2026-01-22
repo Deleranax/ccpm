@@ -22,7 +22,7 @@
 
 local ctextutils = require("commons.ctextutils")
 
-local LOOKUP_TABLE_FILE = "/.data/rednet-relay/lookup_table.json"
+local LOOKUP_TABLE_FILE = "/.data/rednet-router/lookup_table.json"
 local REDNET_MESSAGE_STRUCT = {
     nMessageID = "number",
     nRecipient = "number",
@@ -101,8 +101,8 @@ local function modem_handler(modem, channel, reply_channel, message)
             -- Check if the side is valid
             if modems[saved_side] then
                 if saved_side ~= modem then
-                    print("[" .. ctextutils.pad(message.nSender, 5) .. "] " .. ctextutils.pad(modem, 5) ..
-                        " --> " .. ctextutils.pad(saved_side, 5) .. " [" .. ctextutils.pad(message.nRecipient, 5) .. "]")
+                    print("[" .. ctextutils.pad(message.nSender, 5) .. "] " .. ctextutils.pad(modem, 6) ..
+                        " --> " .. ctextutils.pad(saved_side, 6) .. " [" .. ctextutils.pad(message.nRecipient, 5) .. "]")
 
                     -- Check if it is a greet message
                     if send_channel ~= rednet.CHANNEL_REPEAT then
@@ -117,7 +117,7 @@ local function modem_handler(modem, channel, reply_channel, message)
             end
         end
 
-        print("[" .. ctextutils.pad(message.nSender, 5) .. "] " .. ctextutils.pad(modem, 5) ..
+        print("[" .. ctextutils.pad(message.nSender, 5) .. "] " .. ctextutils.pad(modem, 6) ..
             " --> all   [" .. ctextutils.pad(message.nRecipient, 5) .. "]")
         for side, mod in pairs(modems) do
             if side ~= modem then
