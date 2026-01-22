@@ -16,6 +16,50 @@ pastebin run 1JCdz59p
 
 The installer will add this repository to your CCPM configuration and download the latest version of CCPM.
 
+## Usage
+
+CCPM provides a simple command-line interface for managing packages. Here are some basic commands:
+
+```sh
+ccpm install <package>      # Install a package
+ccpm uninstall <package>    # Uninstall a package
+ccpm update                 # Update package index and repository manifests
+ccpm upgrade                # Upgrade all packages (or specific packages)
+ccpm list <available|installed> [query]  # List packages
+ccpm repo <add|remove|list> # Manage repositories
+ccpm status                 # Show current status
+ccpm recover                # Recover a stopped transaction
+ccpm help                   # Show detailed help
+```
+
+For more detailed information about each command, use `ccpm help` on any CCPM-enabled computer.
+
+### Multiple Repository Support
+
+CCPM supports multiple package repositories with configurable priorities. You can add custom repositories to distribute
+your own packages alongside the official CCPM repository. See the [Setting Up Your Own Repository](#setting-up-your-own-repository-git-forges)
+section for detailed instructions on creating and hosting your own package repository.
+
+### Transaction System
+
+CCPM uses a transaction system to ensure safe package operations. If an installation or uninstallation is interrupted,
+you can recover the transaction using `ccpm recover`. CCPM stores its data (package database, repository information,
+and transaction state) in `~/.data/ccpm`.
+
+### Directory Structure
+
+CCPM can manage files anywhere on the system, but follows these recommended conventions:
+
+- `/lib/your-lib.lua` or `/lib/your-lib/init.lua` - Library files that can be imported with `require("your-lib")`.
+  Submodules can be accessed using dot-separated paths (e.g., `require("your-lib.submodule")`).
+- `/bin/your-bin.lua` - Executable programs that can be run directly from the shell using `your-bin`
+- `/startup/50-your-startup.lua` - Startup scripts that run automatically at boot. The leading number dictates
+  priority (lower numbers run first). It is recommended not to use numbers below 10 as they may interfere with CCPM's
+  startup sequence.
+
+When you install a package, CCPM automatically places its files in the appropriate directories based on the package
+structure.
+
 ## Setting Up Your Own Repository (Git Forges)
 
 You can set up your own CCPM repository to distribute packages for CC:Tweaked on any Git hosting platform. GitHub is
