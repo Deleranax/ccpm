@@ -48,10 +48,10 @@ You can set up your own CCPM repository to distribute packages for CC:Tweaked. T
    this repository configured as package source in their CCPM instances. You can override the default packages by setting a lower priority in
    your repository's `manifest.json` file.
 
-   > [!IMPORTANT]
-   > As per the GNU General Public License v3.0, you are free to use, modify, and distribute this software but you must also provide the source
-   > code for any modifications you make and state the changes you have made. You must also include a copy of the GNU General Public License v3.0
-   > in your repository and credit the original authors (`Alexandre Leconte <aleconte@dwightstudio.fr>`).
+> [!IMPORTANT]
+> As per the GNU General Public License v3.0, you are free to use, modify, and distribute this software but you must also provide the source
+> code for any modifications you make and state the changes you have made. You must also include a copy of the GNU General Public License v3.0
+> in your repository and credit the original authors (`Alexandre Leconte <aleconte@dwightstudio.fr>`).
 
 2. Configure the repository `manifest.json` at the root of your repository:
    ```json
