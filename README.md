@@ -28,7 +28,7 @@ You can set up your own CCPM repository to distribute packages for CC:Tweaked. T
 
 ### Initial Setup
 
-1. **Create a new repository** based on this template structure:
+1. Create a new repository on GitHub. Clone it and add files to the `main` branch based on this template structure:
    ```
    your-repo/
    ├── .github/
@@ -43,20 +43,30 @@ You can set up your own CCPM repository to distribute packages for CC:Tweaked. T
    └── manifest.json  (repository metadata)
    ```
 
-2. **Configure the repository `manifest.json`** at the root of your repository:
+   You can copy the files (`build.py`, `.github/workflows/build.yml`, and `manifest.json`) from this repository and modify them as needed.
+   You can (but don't need to) copy the packages (`packages/`) from this repository and modify them as needed. The user will most likely have
+   this repository configured as package source in their CCPM instances. You can override the default packages by setting a lower priority in
+   your repository's `manifest.json` file.
+
+   > [!IMPORTANT]
+   > As per the GNU General Public License v3.0, you are free to use, modify, and distribute this software but you must also provide the source
+   > code for any modifications you make and state the changes you have made. You must also include a copy of the GNU General Public License v3.0
+   > in your repository and credit the original authors (`Alexandre Leconte <aleconte@dwightstudio.fr>`).
+
+2. Configure the repository `manifest.json` at the root of your repository:
    ```json
    {
      "name": "Your Repository Name",
      "url": "https://raw.githubusercontent.com/your-username/your-repo/refs/heads/dist/",
-     "priority": 100
+     "priority": -10
    }
    ```
    
    - `name`: A friendly name for your repository
    - `url`: The URL to your `dist` branch (this should match the actual URL users will use)
-   - `priority`: Repository priority (lower numbers = higher priority, `100` is standard)
+   - `priority`: Repository priority (lower numbers = higher priority, `0` is the priority of the official CCPM repository)
 
-3. **Create the `dist` branch** (required before the first build):
+3. Create the `dist` branch (required before the first build):
    ```sh
    git checkout --orphan dist
    git rm -rf .
@@ -65,11 +75,17 @@ You can set up your own CCPM repository to distribute packages for CC:Tweaked. T
    git checkout main
    ```
 
-4. **Configure GitHub Actions permissions**:
+4. Configure GitHub Actions permissions:
    - Go to your repository settings
    - Navigate to `Actions` → `General`
    - Under "Workflow permissions", select `Read and write permissions`
    - Save the changes
+
+5. Push the `dist` and `main` branches (in this order):
+   ```sh
+   git push origin dist
+   git push origin main
+   ```
 
 ### Adding Packages
 

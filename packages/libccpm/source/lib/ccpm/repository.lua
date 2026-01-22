@@ -111,7 +111,7 @@ function repository.update_index()
     -- Merge repositories index according to priority
     for id, index in pairs(repositories_index) do
         for name, manifest in pairs(index) do
-            if not new_index[name] or repositories[id].priority > repositories[id].priority then
+            if not new_index[name] or new_index[name].priority > repositories[id].priority then
                 new_index[name] = manifest
                 new_index[name].repository = id
             end
