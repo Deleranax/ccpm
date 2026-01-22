@@ -31,6 +31,11 @@ local repository = {}
 function repository.extract_raw_url(url)
     expect.expect(1, url, "string")
 
+    -- Add https:// if no scheme is present (but preserve other schemes like file://)
+    if not url:match("^%w+://") then
+        url = "https://" .. url
+    end
+
     -- Remove trailing slashes
     url = url:gsub("/+$", "")
 
@@ -89,7 +94,13 @@ function repository.get_driver(url)
         url = url.url
     end
 
-    local driver = require("ccpm.driver." .. url:match("^([^/]+)://"))
+    local scheme = url:match("^([^/]+)://")
+
+    if not scheme then
+        return nil, "invalid URL: " .. url
+    end
+
+    local driver = require("ccpm.driver." .. scheme)
     if not driver then
         return nil, "driver not found"
     elseif not driver.can_handle(url) then

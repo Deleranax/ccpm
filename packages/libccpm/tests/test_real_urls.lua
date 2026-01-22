@@ -2,6 +2,11 @@
 -- This script tests against actual repositories to verify URLs work
 
 local function extract_raw_url(url)
+    -- Add https:// if no scheme is present (but preserve other schemes like file://)
+    if not url:match("^%w+://") then
+        url = "https://" .. url
+    end
+
     -- Remove trailing slashes
     url = url:gsub("/+$", "")
 
@@ -116,6 +121,13 @@ local real_tests = {
         branch = "master",
         file = "README.md",
         service = "SourceHut"
+    },
+    {
+        name = "GitHub - No scheme (torvalds/linux)",
+        repo_url = "github.com/torvalds/linux",
+        branch = "master",
+        file = "README",
+        service = "GitHub (no scheme)"
     },
 }
 

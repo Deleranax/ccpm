@@ -3,6 +3,11 @@
 
 -- Simulate the extract_raw_url function logic
 local function extract_raw_url(url)
+    -- Add https:// if no scheme is present (but preserve other schemes like file://)
+    if not url:match("^%w+://") then
+        url = "https://" .. url
+    end
+
     -- Remove trailing slashes
     url = url:gsub("/+$", "")
 
@@ -84,6 +89,16 @@ local tests = {
         expected = "https://raw.githubusercontent.com/deleranax/ccpm/refs/heads/dist/",
         service = "GitHub (example from spec)"
     },
+    {
+        input = "github.com/user/repo",
+        expected = "https://raw.githubusercontent.com/user/repo/refs/heads/dist/",
+        service = "GitHub (no scheme)"
+    },
+    {
+        input = "www.github.com/user/repo",
+        expected = "https://raw.githubusercontent.com/user/repo/refs/heads/dist/",
+        service = "GitHub (no scheme with www)"
+    },
 
     -- GitLab tests
     {
@@ -106,6 +121,11 @@ local tests = {
         expected = "https://gitlab.com/user/repo/-/raw/dist/",
         service = "GitLab (trailing slash)"
     },
+    {
+        input = "gitlab.com/user/repo",
+        expected = "https://gitlab.com/user/repo/-/raw/dist/",
+        service = "GitLab (no scheme)"
+    },
 
     -- Bitbucket tests
     {
@@ -122,6 +142,11 @@ local tests = {
         input = "https://bitbucket.org/user/repo.git",
         expected = "https://bitbucket.org/user/repo/raw/dist/",
         service = "Bitbucket (.git)"
+    },
+    {
+        input = "bitbucket.org/user/repo",
+        expected = "https://bitbucket.org/user/repo/raw/dist/",
+        service = "Bitbucket (no scheme)"
     },
 
     -- Codeberg tests
@@ -140,6 +165,11 @@ local tests = {
         expected = "https://codeberg.org/user/repo/raw/branch/dist/",
         service = "Codeberg (www)"
     },
+    {
+        input = "codeberg.org/user/repo",
+        expected = "https://codeberg.org/user/repo/raw/branch/dist/",
+        service = "Codeberg (no scheme)"
+    },
 
     -- SourceHut tests
     {
@@ -156,6 +186,11 @@ local tests = {
         input = "http://git.sr.ht/~user/repo",
         expected = "https://git.sr.ht/~user/repo/blob/dist/",
         service = "SourceHut (http)"
+    },
+    {
+        input = "git.sr.ht/~user/repo",
+        expected = "https://git.sr.ht/~user/repo/blob/dist/",
+        service = "SourceHut (no scheme)"
     },
 
     -- Fallback tests (unknown/raw URLs)
@@ -174,12 +209,26 @@ local tests = {
         expected = "https://custom-git.company.com/repos/project/",
         service = "Unknown (custom URL)"
     },
+    {
+        input = "file:///path/to/local/repo",
+        expected = "file:///path/to/local/repo/",
+        service = "File scheme (preserved)"
+    },
+    {
+        input = "ftp://example.com/repo",
+        expected = "ftp://example.com/repo/",
+        service = "FTP scheme (preserved)"
+    },
 }
 
 -- Helper function to check for double slashes (except in protocol)
 local function has_double_slashes(url)
-    -- Remove the protocol part
-    local without_protocol = url:gsub("^https?://", "")
+    -- Remove the protocol part (including the ://)
+    local without_protocol = url:gsub("^%w+://", "")
+    -- For file:// URLs, also remove the leading slash (file:/// is valid)
+    if url:match("^file://") then
+        without_protocol = without_protocol:gsub("^/", "")
+    end
     -- Check if there are any double slashes remaining
     return without_protocol:match("//") ~= nil
 end
