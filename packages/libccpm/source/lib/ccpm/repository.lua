@@ -23,6 +23,62 @@ local event = require("ccpm.eventutils")
 --- @export
 local repository = {}
 
+--- Convert a repository URL to a raw URL.
+--- Note: Implemented using Claude Sonnet 4.5. It has been tested (see the test directory), but may incorrectly
+--- handle certain services.
+--- @param url string: Repository URL.
+--- @return string: Raw URL.
+function repository.extract_raw_url(url)
+    expect.expect(1, url, "string")
+
+    -- Remove trailing slashes
+    url = url:gsub("/+$", "")
+
+    -- GitHub: https://github.com/user/repo -> https://raw.githubusercontent.com/user/repo/refs/heads/dist/
+    local user, repo = url:match("^https?://[www%.]*github%.com/([^/]+)/([^/]+)/?$")
+    if user and repo then
+        -- Remove .git suffix if present
+        repo = repo:gsub("%.git$", "")
+        return string.format("https://raw.githubusercontent.com/%s/%s/refs/heads/dist/", user, repo)
+    end
+
+    -- GitLab: https://gitlab.com/user/repo -> https://gitlab.com/user/repo/-/raw/dist/
+    local gitlab_url = url:match("^(https?://[^/]*gitlab[^/]*/[^/]+/[^/]+)/?$")
+    if gitlab_url then
+        gitlab_url = gitlab_url:gsub("%.git$", "")
+        return gitlab_url .. "/-/raw/dist/"
+    end
+
+    -- Bitbucket: https://bitbucket.org/user/repo -> https://bitbucket.org/user/repo/raw/dist/
+    user, repo = url:match("^https?://[www%.]*bitbucket%.org/([^/]+)/([^/]+)/?$")
+    if user and repo then
+        repo = repo:gsub("%.git$", "")
+        return string.format("https://bitbucket.org/%s/%s/raw/dist/", user, repo)
+    end
+
+    -- Codeberg: https://codeberg.org/user/repo -> https://codeberg.org/user/repo/raw/branch/dist/
+    user, repo = url:match("^https?://[www%.]*codeberg%.org/([^/]+)/([^/]+)/?$")
+    if user and repo then
+        repo = repo:gsub("%.git$", "")
+        return string.format("https://codeberg.org/%s/%s/raw/branch/dist/", user, repo)
+    end
+
+    -- SourceHut: https://git.sr.ht/~user/repo -> https://git.sr.ht/~user/repo/blob/dist/
+    local srht_user, srht_repo = url:match("^https?://git%.sr%.ht/(~[^/]+)/([^/]+)/?$")
+    if srht_user and srht_repo then
+        srht_repo = srht_repo:gsub("%.git$", "")
+        return string.format("https://git.sr.ht/%s/%s/blob/dist/", srht_user, srht_repo)
+    end
+
+    -- If no pattern matches, assume it's already a raw URL
+    -- Ensure it ends with a slash for consistency
+    if not url:match("/$") then
+        url = url .. "/"
+    end
+
+    return url
+end
+
 --- Get the driver for the repository
 --- @param url string | table: Repository URL or manifest.
 --- @return table | nil, nil | string: A table representing the driver or nil and an error message.
@@ -48,13 +104,14 @@ end
 --- @return nil | string: Nil or an error message.
 function repository.add(url)
     expect.expect(1, url, "string")
+    local raw_url = repository.extract_raw_url(url)
 
-    local driver, err = repository.get_driver(url)
+    local driver, err = repository.get_driver(raw_url)
     if not driver then
         return err
     end
 
-    local manifest, err = driver.get_manifest(url)
+    local manifest, err = driver.get_manifest(raw_url)
     if type(manifest) ~= "table" then
         return "failed to get manifest: " .. err
     end
@@ -78,7 +135,7 @@ end
 
 --- Update the index of all repositories.
 --- @return nil | string: Nil or an error message.
-function repository.update_index()
+function repository.update()
     local repositories_index = {}
     local repositories, count = database.get_repositories()
 

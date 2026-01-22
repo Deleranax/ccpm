@@ -183,7 +183,7 @@ local function update()
 
     parallel.waitForAny(
         function()
-            err = repo.update_index()
+            err = repo.update()
         end,
         function()
             local total = 1 / 0

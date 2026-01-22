@@ -95,7 +95,7 @@ parallel.waitForAny(
         end
 
         print("Updating index")
-        err = repo.update_index()
+        err = repo.update()
         if err then
             error(err)
         end
