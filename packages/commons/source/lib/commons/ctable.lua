@@ -79,4 +79,51 @@ function ctable.slice(tab, start, finish)
     return result
 end
 
+--- Check if two tables are equal.
+--- @param tab1 table: The first table.
+--- @param tab2 table: The second table.
+--- @param ignore_mt boolean: Whether to ignore metatables, defaults to false.
+--- @return boolean: True if the tables are equal, false otherwise.
+function ctable.equals(tab1, tab2, ignore_mt)
+    if tab1 == tab2 then
+        return true
+    end
+
+    local type_tab1 = type(tab1)
+    local type_tab2 = type(tab2)
+
+    if type_tab1 ~= type_tab2 then
+        return false
+    end
+
+    if type_tab1 ~= 'table' then
+        return false
+    end
+
+    if not ignore_mt then
+        local mt_tab1 = getmetatable(tab1)
+        if mt_tab1 and mt_tab1.__eq then
+            --compare using built in method
+            return tab1 == tab2
+        end
+    end
+
+    local keys = {}
+
+    for key1, value1 in pairs(tab1) do
+        local value2 = tab2[key1]
+        if value2 == nil or ctable.equals(value1, value2, ignore_mt) == false then
+            return false
+        end
+        keys[key1] = true
+    end
+
+    for key2, _ in pairs(tab2) do
+        if not keys[key2] then
+            return false
+        end
+    end
+    return true
+end
+
 return ctable

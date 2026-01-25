@@ -3,6 +3,6 @@
   "license": "GPL-3.0-or-later",
   "authors": ["Alexandre Leconte <aleconte@dwightstudio.fr>"],
   "maintainers": ["Alexandre Leconte <aleconte@dwightstudio.fr>"],
-  "version": "1.3.2",
+  "version": "1.3.3",
   "dependencies": ["libdeflate", "lockbox", "uuid", "commons"]
 }

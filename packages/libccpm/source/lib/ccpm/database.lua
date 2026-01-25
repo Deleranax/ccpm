@@ -38,8 +38,8 @@ local packages_database = {}
 --- @param fallback table: The fallback data.
 --- @return table: The loaded data.
 local function load_or_backup(path, fallback)
-    expect.expect(1, path, "string")
-    expect.expect(1, fallback, "table", "nil")
+    expect(1, path, "string")
+    expect(1, fallback, "table", "nil")
 
     if fs.exists(path) then
         local file = fs.open(path, "r")
@@ -132,7 +132,7 @@ end
 --- @param repository table: A table representing the repository.
 --- @return string | nil, string | nil: The local ID of the repository, or nil and an error message if the repository already exists.
 function database.add_repository(repository)
-    expect.expect(1, repository, "table")
+    expect(1, repository, "table")
 
     -- Check if the repository already exists
     for id, repo in pairs(repositories_index) do
@@ -187,7 +187,7 @@ end
 --- @param query string: The search query.
 --- @return table | nil, string | number: A table of repositories and the number of entries, or nil and an error message if the database cannot be loaded.
 function database.search_repositories(query)
-    expect.expect(1, query, "string")
+    expect(1, query, "string")
 
     local pattern = make_pattern(query)
     local repositories = {}
@@ -205,7 +205,7 @@ end
 --- Set the packages index.
 --- @param index table: The packages index.
 function database.set_packages_index(index)
-    expect.expect(1, index, "table")
+    expect(1, index, "table")
 
     packages_index = index
 
@@ -216,7 +216,7 @@ end
 --- @param name string: The package name.
 --- @return table | nil, string | nil: A table of packages, or nil and an error message if package not found.
 function database.get_package(name)
-    expect.expect(1, name, "string")
+    expect(1, name, "string")
 
     local package = packages_index[name]
     if package == nil then
@@ -235,7 +235,7 @@ end
 --- @param query string: The search query, with wildcard support.
 --- @return table, number: A table of packages and the number of entries.
 function database.search_packages(query)
-    expect.expect(1, query, "string")
+    expect(1, query, "string")
 
     local pattern = make_pattern(query)
     local packages = {}
@@ -260,7 +260,7 @@ end
 --- @param query string: The search query, with wildcard support.
 --- @return table, number: A table of installed packages and the number of entries.
 function database.search_installed_packages(query)
-    expect.expect(1, query, "string")
+    expect(1, query, "string")
 
     local pattern = make_pattern(query)
     local packages = {}
@@ -279,7 +279,7 @@ end
 --- @param name string: The package name.
 --- @return table | nil, string | nil: The installed package or nil and an error message.
 function database.get_installed_package(name)
-    expect.expect(1, name, "string")
+    expect(1, name, "string")
 
     local package = packages_database[name]
     if package == nil then
@@ -291,7 +291,7 @@ end
 --- Set the packages database.
 --- @param db table: The packages database.
 function database.set_packages_database(db)
-    expect.expect(1, db, "table")
+    expect(1, db, "table")
 
     packages_database = db
 

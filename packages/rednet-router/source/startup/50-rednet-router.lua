@@ -21,6 +21,7 @@
 -- https://github.com/cc-tweaked/CC-Tweaked/blob/mc-1.20.x/projects/core/src/main/resources/data/computercraft/lua/rom/apis/rednet.lua
 
 local ctextutils = require("commons.ctextutils")
+local cfileutils = require("commons.cfileutils")
 
 local LOOKUP_TABLE_FILE = "/.data/rednet-router/lookup_table.json"
 local REDNET_MESSAGE_STRUCT = {
@@ -29,27 +30,10 @@ local REDNET_MESSAGE_STRUCT = {
     nSender = "number"
 }
 
---- Save data to a file
-local function save(path, data)
-    local file = fs.open(path, "w")
-    file.write(textutils.serialize(data))
-    file.close()
-end
-
---- Load data from a file
-local function load(path)
-    if fs.exists(path) then
-        local file = fs.open(path, "r")
-        local data = textutils.unserialize(file.readAll())
-        file.close()
-        return data
-    else
-        return {}
-    end
-end
+local load, save = cfileutils.make_store(LOOKUP_TABLE_FILE)
 
 local modems = {}
-local lookup_table = load(LOOKUP_TABLE_FILE)
+local lookup_table = load()
 local received_messages = {}
 local messages_timeout = {}
 
@@ -82,7 +66,7 @@ local function modem_handler(modem, channel, reply_channel, message)
 
     -- Update lookup table
     lookup_table[message.nSender] = modem
-    save(LOOKUP_TABLE_FILE, lookup_table)
+    save(lookup_table)
 
     if channel == rednet.CHANNEL_REPEAT then
         -- Add message to history and start timeout

@@ -33,8 +33,8 @@ local package    = {}
 --- @param output string: Pathname for the output directory.
 --- @return table | nil, nil | string: A table representing the manifest or nil and an error message.
 function package.unpack(package_path, output)
-    expect.expect(1, package_path, "string")
-    expect.expect(2, output, "string")
+    expect(1, package_path, "string")
+    expect(2, output, "string")
 
     if not fs.exists(output) then
         fs.makeDir(output)
@@ -107,9 +107,9 @@ end
 --- @param path string The directory path where the package file should be downloaded.
 --- @return nil | string: Nil and an error message.
 function package.download(name, version, path)
-    expect.expect(1, name, "string")
-    expect.expect(2, version, "string", nil)
-    expect.expect(3, path, "string")
+    expect(1, name, "string")
+    expect(2, version, "string", nil)
+    expect(3, path, "string")
 
     local manifest, err = database.get_package(name)
     if manifest == nil then

@@ -33,7 +33,7 @@ function ctextutils.truncate(text, width)
         if width <= 1 then
             return "\16"
         else
-            return string.sub(text, 1, width - 1) .. "\16"
+            return string.sub(text, 1, width - 1) .. "\187"
         end
     end
 end
@@ -75,10 +75,10 @@ end
 --- @param rows table: The rows of the table (list of lists of strings).
 --- @param t table | nil: The terminal on which to display.
 function ctextutils.print_table(header, modes, rows, t)
-    expect.expect(1, header, "table")
-    expect.expect(2, modes, "table")
-    expect.expect(3, rows, "table")
-    expect.expect(4, t, "table", "nil")
+    expect(1, header, "table")
+    expect(2, modes, "table")
+    expect(3, rows, "table")
+    expect(4, t, "table", "nil")
 
     -- Monitor or current terminal
     t = t or term

@@ -29,7 +29,7 @@ local repository = {}
 --- @param url string: Repository URL.
 --- @return string: Raw URL.
 function repository.extract_raw_url(url)
-    expect.expect(1, url, "string")
+    expect(1, url, "string")
 
     -- Add https:// if no scheme is present (but preserve other schemes like file://)
     if not url:match("^%w+://") then
@@ -88,7 +88,7 @@ end
 --- @param url string | table: Repository URL or manifest.
 --- @return table | nil, nil | string: A table representing the driver or nil and an error message.
 function repository.get_driver(url)
-    expect.expect(1, url, "string", "table")
+    expect(1, url, "string", "table")
 
     if type(url) == "table" then
         url = url.url
@@ -114,7 +114,7 @@ end
 --- @param url string | table: Repository URL or manifest.
 --- @return table | nil, nil | string: A table representing the manifest or nil and an error message.
 function repository.fetch_manifest(url)
-    expect.expect(1, url, "string", "table")
+    expect(1, url, "string", "table")
 
     if type(url) == "table" then
         url = url.url

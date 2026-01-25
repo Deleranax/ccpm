@@ -130,9 +130,9 @@ end
 --- @param wanted? boolean: Whether the package is wanted or not (wanted = explicitly installed by user). If nil, defaults to true.
 --- @return nil | string: Error message or nil if successful.
 function transaction.install(name, version, wanted)
-    expect.expect(1, name, "string")
-    expect.expect(2, version, "string", "nil")
-    expect.expect(3, wanted, "boolean", "nil")
+    expect(1, name, "string")
+    expect(2, version, "string", "nil")
+    expect(3, wanted, "boolean", "nil")
 
     if wanted == nil then
         wanted = true

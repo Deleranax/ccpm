@@ -25,7 +25,7 @@ local httpd = {}
 --- @param url string: The URL to check.
 --- @return boolean: True if the URL is compatible, false otherwise.
 function httpd.can_handle(url)
-    expect.expect(1, url, "string")
+    expect(1, url, "string")
 
     return url:match("^https?://") ~= nil
 end
@@ -62,7 +62,7 @@ end
 --- @param manifest table: The manifest table.
 --- @return table | nil, nil | string: A table representing the packages index or an error message.
 function httpd.get_packages_index(manifest)
-    expect.expect(1, manifest, "table")
+    expect(1, manifest, "table")
 
     local response = http.get(manifest.url .. "/pool/index.json")
     if not response then
@@ -86,10 +86,10 @@ end
 --- @param path string The directory path where the package file should be downloaded.
 --- @return nil | string Error message or nil if successful.
 function httpd.download_package(manifest, name, version, path)
-    expect.expect(1, manifest, "table")
-    expect.expect(2, name, "string")
-    expect.expect(3, version, "string")
-    expect.expect(4, path, "string")
+    expect(1, manifest, "table")
+    expect(2, name, "string")
+    expect(3, version, "string")
+    expect(4, path, "string")
 
     local filename = name .. "." .. version .. ".ccp"
 
