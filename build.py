@@ -38,7 +38,7 @@ MANIFEST_FIELDS = [
 ]
 PACKAGES_POOL_DIR = "./pool"
 INDEX_FILE = "index.json"
-REMOVE_COMMENTS = True
+MINIFY_PACKAGES = True
 
 # Command-line arguments parser
 parser = argparse.ArgumentParser(description="CCPM build tool")
@@ -98,6 +98,16 @@ def get_manifest(name):
         print("[!] Package is invalid (unreadable manifest)")
 
 
+def minify(content):
+    content = re.sub(
+        r"\[(=*)\[(.|\n)*?\]\1\]", "", content, count=0, flags=re.MULTILINE
+    )
+    content = re.sub(r"^\s*--.*\n", "", content, count=0, flags=re.MULTILINE)
+    content = re.sub(r"^\s+", "", content, count=0, flags=re.MULTILINE)
+    content = re.sub(r"\n+", " ", content, count=0, flags=re.MULTILINE)
+    return content
+
+
 def build_package(name):
     manifest = get_manifest(name)
 
@@ -111,14 +121,8 @@ def build_package(name):
             ) as file:
                 content = file.read()
 
-                if REMOVE_COMMENTS:
-                    # Remove the multilines comments
-                    content = re.sub(
-                        r"--\[(=*)\[(.|\n)*?\]\1\]", "", content, 0, re.MULTILINE
-                    )
-
-                    # Remove the single line comments
-                    content = re.sub(r"^\s*--.*\n", "", content, 0, re.MULTILINE)
+                if MINIFY_PACKAGES:
+                    content = minify(content)
 
                 manifest["files"][path] = {
                     "content": content,
