@@ -26,7 +26,7 @@ local cuicui = {}
 
 --- Debug
 cuicui.DEBUG = false
-cuicui.DEBUG_LOG_FILE = "cuicui_debug_tree.json"
+cuicui.DEBUG_LOG_FILE = "cuicui_debug.tree"
 
 --- Structure of a widget module. Modules that fail to match this structure won't be loaded.
 --- All functions should be deterministic, meaning they should always return the same result
@@ -220,9 +220,16 @@ cuicui.WIDGET_MODULE_STRUCT = {
     --- **Important:** For monitors, this event is simulated 0.5 seconds after the click
     --- because monitors don't have a native click-up event in ComputerCraft.
     ---
+    --- **Event propagation when release happens outside the widget:**
+    --- - If the mouse button is released outside this widget, `x` and `y` will be `0, 0`
+    --- - The event will be fired to any widget the mouse is in when the release happens
+    --- - The event will also be fired to every widget it was in when the click began
+    --- - If a widget is in both sets, it only receives the event once (no duplicates)
+    ---
     --- **Implementation guidelines:**
     --- - Access this widget's properties via: `props_tree[id]`
     --- - Coordinates `x` and `y` are relative to the widget (top-left = 1, 1)
+    --- - **When `x == 0` and `y == 0`, the release happened outside this widget**
     --- - The `button` parameter is a number from the OS event (1 = left, 2 = right, 3 = middle)
     --- - **Note:** For monitors, `button` is always 1 (left) and fires 0.5s after click
     --- - You can modify widget properties in `props_tree[id]` to change state
@@ -246,8 +253,8 @@ cuicui.WIDGET_MODULE_STRUCT = {
     ---
     --- @param props_tree table: Map of widget IDs to their properties (forms a tree via parent/child references)
     --- @param id any: The ID key for this widget in the props_tree
-    --- @param x number: X-coordinate of the release relative to widget origin (1-based)
-    --- @param y number: Y-coordinate of the release relative to widget origin (1-based)
+    --- @param x number: X-coordinate of the release relative to widget origin (1-based), or 0 if release happened outside widget
+    --- @param y number: Y-coordinate of the release relative to widget origin (1-based), or 0 if release happened outside widget
     --- @param button number: Mouse button number from OS event (1=left, 2=right, 3=middle; always 1 for monitors)
     handle_click_up = { "function" },
 
@@ -257,6 +264,9 @@ cuicui.WIDGET_MODULE_STRUCT = {
     --- number from the OS event system. You can use this to implement keyboard navigation,
     --- text input, shortcuts, or other keyboard-driven interactions.
     ---
+    --- The `held` parameter indicates whether this is a repeat event from holding the key
+    --- down (`true`) or the initial key press (`false`).
+    ---
     --- **Important:** This function is fired regardless of whether the widget has focus.
     --- If your widget should only respond to keys when focused, check `props_tree[id].focus`
     --- at the beginning of your implementation.
@@ -264,6 +274,7 @@ cuicui.WIDGET_MODULE_STRUCT = {
     --- **Implementation guidelines:**
     --- - Access this widget's properties via: `props_tree[id]`
     --- - The `key` parameter is a number representing the key code from the OS
+    --- - The `held` parameter is `true` for repeat events (holding key), `false` for initial press
     --- - Check `props_tree[id].focus` if the widget should only respond when focused
     --- - You can modify widget properties in `props_tree[id]` to change state
     --- - This function returns nothing
@@ -271,14 +282,16 @@ cuicui.WIDGET_MODULE_STRUCT = {
     ---
     --- **Example:**
     --- ```
-    --- function widget.handle_key(props_tree, id, key)
+    --- function widget.handle_key(props_tree, id, key, held)
     ---     local data = props_tree[id]
     ---     -- Only respond to keys when focused
     ---     if not data.focus then return end
+    ---     -- Ignore repeat events for certain keys
+    ---     if held and key == keys.enter then return end
     ---     -- Check for Enter key (keys.enter)
     ---     if key == keys.enter then
     ---         data.submitted = true
-    ---     -- Check for arrow keys for navigation
+    ---     -- Check for arrow keys for navigation (allow repeats)
     ---     elseif key == keys.up then
     ---         data.selected_index = math.max(1, data.selected_index - 1)
     ---     end
@@ -288,6 +301,7 @@ cuicui.WIDGET_MODULE_STRUCT = {
     --- @param props_tree table: Map of widget IDs to their properties (forms a tree via parent/child references)
     --- @param id any: The ID key for this widget in the props_tree
     --- @param key number: Key code from the OS event representing which key was pressed
+    --- @param held boolean: True if this is a repeat event from holding the key down, false for initial press
     handle_key = { "function" },
 
     --- Handles key release events when the user releases a key.
@@ -361,6 +375,27 @@ cuicui.WIDGET_MODULE_STRUCT = {
     handle_lost_focus = { "function" }
 }
 
+--- List of properties readable/writable in the widget function.
+cuicui.COMMON_PROPS = {
+    -- Unique identifier for the widget. Defaults to stable unique ID generated by the library (the line)
+    -- numbers. SHOULD BE SET BY THE USER WHEN CREATING WIDGETS IN LOOPS (as the line will be the same).
+    id = { "string", "number" },
+    -- Boolean value describing whether the widget is horizontally expanded.
+    h_expand = { "boolean" },
+    -- Boolean value describing whether the widget is vertically expanded.
+    v_expand = { "boolean" },
+    -- Boolean value describing whether the widget is visible.
+    visible = { "boolean" }
+}
+
+--- List of event states readable in the widget function.
+cuicui.EVENT_STATES = {
+    -- Boolean value describing whether the widget has focus.
+    focus = { "boolean", "nil" },
+    -- Number value wehen widget is clicked (which button) or nil.
+    click = { "number", "nil" }
+}
+
 --- Index widgets table
 --- @param self table: The widgets table.
 --- @param key string: The name of the widget.
@@ -370,8 +405,18 @@ local function index_widgets(self, key)
     local status, widget = pcall(require, "cuicui.widget." .. key)
 
     if status then
-        for key, types in pairs(cuicui.WIDGET_MODULE_STRUCT) do
-            expect.field(widget, key, table.unpack(types))
+        for name, types in pairs(cuicui.WIDGET_MODULE_STRUCT) do
+            local ok = false
+            for _, typ in ipairs(types) do
+                if type(widget[name]) == typ then
+                    ok = true
+                    break
+                end
+            end
+
+            if not ok then
+                error("Invalid type for widget '" .. key .. "' field '" .. name .. "'", 3)
+            end
         end
     else
         error("Unknown widget '" .. key .. "'", 3)
@@ -389,8 +434,9 @@ local widgets = setmetatable({}, {
 --- @param key string: The name of the widget.
 --- @param parent_id any: The parent ID of the widget.
 --- @param widget table: The widget table.
+--- @param old_props table | nil: The old properties.
 --- @return table: The widget properties.
-local function make_props(key, parent_id, widget)
+local function make_props(key, parent_id, widget, old_props)
     local props = {
         type = key,
         parent = parent_id,
@@ -398,8 +444,6 @@ local function make_props(key, parent_id, widget)
         visible = true,
         h_expand = false,
         v_expand = false,
-        focus = false,
-        dirty = true,
     }
 
     -- If the widget is a container, add an empty children table
@@ -410,7 +454,33 @@ local function make_props(key, parent_id, widget)
     -- Set the default properties if they are not already set
     widget.populate_default_props(props)
 
+    -- If old properties exist, copy them to the new properties
+    if old_props then
+        for state in pairs(cuicui.EVENT_STATES) do
+            props[state] = old_props[state]
+        end
+    end
+
     return props
+end
+
+--- Check if the properties have changed (outside render values)
+--- @param props table: The new properties.
+--- @param old_props table: The old properties.
+local function set_dirtiness(props, old_props)
+    if old_props == nil then
+        props.dirty = true
+        return
+    end
+
+    for key, value in pairs(props) do
+        if not cuicui.EVENT_STATES[key] and old_props[key] ~= value then
+            props.dirty = true
+            return
+        end
+    end
+
+    props.dirty = false
 end
 
 --- Make a new UI table
@@ -423,8 +493,16 @@ local function make_ui(parent_props, old_props_tree, props_tree)
     local function index(_, key)
         -- If the parent exists and the key exists in the parent's table
         -- It allows user to access the widget properties
-        if parent_props[key] then
+        if cuicui.COMMON_PROPS[key] then
             return parent_props[key]
+        elseif parent_widget.PROPS[key] then
+            return parent_props[key]
+        else
+            for state in pairs(cuicui.EVENT_STATES) do
+                if key == state then
+                    return parent_props[state]
+                end
+            end
         end
 
         -- Fetch the widget from the widgets table
@@ -435,19 +513,15 @@ local function make_ui(parent_props, old_props_tree, props_tree)
             expect(1, fn, "function", "nil")
 
             -- Create the widget properties
-            local props = make_props(key, parent_props.id, widget)
+            local props = make_props(key, parent_props.id, widget, old_props_tree[key])
 
             -- Call the function with a new UI table
             if fn then
                 fn(make_ui(props, old_props_tree, props_tree))
             end
 
-            -- Check dirtyness
-            local old_props = old_props_tree[props.id]
-            if old_props then
-                old_props.dirty = nil
-                props.dirty = ctable.equals(props, old_props, true)
-            end
+            -- Check dirtiness
+            set_dirtiness(props, old_props_tree[props.id])
 
             -- Add the widget to the tree
             props_tree[props.id] = props
@@ -459,13 +533,13 @@ local function make_ui(parent_props, old_props_tree, props_tree)
 
     local function newindex(_, key, value)
         -- Assign the value to the widget table
-        if key == "id" then
-            if props_tree[key] then
+        if cuicui.COMMON_PROPS[key] then
+            expect(1, value, table.unpack(cuicui.COMMON_PROPS[key]))
+
+            if key == "id" and props_tree[key] then
                 error("ID already exists: " .. key, 2)
             end
-            parent_props.id = value
-        elseif key == "h_expand" or key == "v_expand" then
-            expect(1, value, "boolean")
+
             parent_props[key] = value
         elseif parent_widget.PROPS[key] then
             expect(1, value, table.unpack(parent_widget.PROPS[key]))
@@ -510,7 +584,7 @@ local function index_cuicui(_, key)
             error("Root widget must be a container", 2)
         end
 
-        local root_props = make_props(key, 0, root_widget)
+        local root_props = make_props(key, 0, root_widget, nil)
 
         -- Add the widget to the tree
         props_tree[root_props.id] = root_props
@@ -523,32 +597,28 @@ local function index_cuicui(_, key)
             -- Compute the tree
             fn(make_ui(root_props, old_props_tree, props_tree))
 
-            -- Check dirtyness of the root widget
+            -- Check dirtiness of the root widget
             local old_root_props = old_props_tree[root_props.id]
-            if old_root_props then
-                old_root_props.dirty = nil
-                root_props.dirty = ctable.equals(root_props, old_root_props, true)
-            end
+            set_dirtiness(root_props, old_root_props)
 
             -- Render the UI
-            -- TODO: Implement dirtyness
-            render.update_layout(props_tree, render_tree, term, root_props, widgets)
+            render.update_layout(props_tree, old_props_tree, term, root_props, old_root_props, widgets)
             render.draw(props_tree, render_tree, term, root_props, widgets)
+
+            -- Wait and process events until the UI needs to be updated
+            if not event.process(props_tree, render_tree, widgets, monitor_name) then
+                term.setCursorPos(1, 1)
+                term.clear()
+                return
+            end
 
             -- Log the tree to a file
             if cuicui.DEBUG then
                 props_tree["_timestamp"] = os.time()
                 local file = fs.open(cuicui.DEBUG_LOG_FILE, "w")
-                file.write(textutils.serializeJSON(props_tree))
+                file.write(textutils.serialize(props_tree))
                 file.close()
                 props_tree["_timestamp"] = nil
-            end
-
-            -- Wait and process events until the UI needs to be updated
-            if not event.process(props_tree, monitor_name, root_props.event_handler) then
-                term.setCursorPos(1, 1)
-                term.clear()
-                return
             end
 
             -- Clear the tree

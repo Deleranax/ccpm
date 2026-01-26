@@ -56,16 +56,19 @@ function widget.draw(props_tree, id, term)
     term.write(data.text)
 end
 
-function widget.handle_click(props_tree, id, x, y)
+function widget.handle_click(props_tree, id, x, y, button)
 end
 
-function widget.handle_key(props_tree, id, key)
+function widget.handle_click_up(props_tree, id, x, y, button)
+end
+
+function widget.handle_key(props_tree, id, key, held)
 end
 
 function widget.handle_key_up(props_tree, id, key)
 end
 
-function widget.handle_focus_lost(props_tree, id)
+function widget.handle_lost_focus(props_tree, id)
 end
 
 return widget

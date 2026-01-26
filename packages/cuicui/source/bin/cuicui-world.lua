@@ -16,23 +16,31 @@
     along with this program.  If not, see <https://www.gnu.org/licenses>.
 --]]
 
-local cuicui = require("cuicui")
+local cuicui  = require("cuicui")
+local const   = require("cuicui.const")
 
 -- Set the debug mode
-cuicui.DEBUG = true
+cuicui.DEBUG  = false
 
 local counter = 1
 
 cuicui.vertical(term.current(), function(ui)
     ui.color = colors.black
-    ui.align = "center"
+    ui.align = const.ALIGN.CENTER + const.ALIGN.HORIZON
     ui.h_expand = true
 
-    counter = counter + 1
+    ui.label(function(ui2)
+        ui2.text = "*click*"
+        ui2.visible = ui.click ~= nil
+    end)
+
+    if ui.click then
+        counter = counter + 1
+    end
 
     for i = 1, (counter % 10) do
         ui.label(function(ui)
-            ui.text = "Cuicui, World!"
+            ui.text = "Cuicui, world! (" .. i .. ")"
             ui.id = "l" .. i -- Important for repeating creation
             if i == 5 then
                 ui.v_expand = true

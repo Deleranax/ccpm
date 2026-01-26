@@ -24,50 +24,117 @@ render.WINDOW_TIMEOUT = 5
 
 --- Update the layout of the UI tree.
 --- @param props_tree table: The properties tree.
---- @param render_tree table: The render tree.
+--- @param old_props_tree table: The old properties tree.
 --- @param term table: The terminal to draw to.
 --- @param root_props table: The root properties.
+--- @param old_root_props table: The old root properties.
 --- @param widgets table: The widgets table.
-function render.update_layout(props_tree, render_tree, term, root_props, widgets)
+function render.update_layout(props_tree, old_props_tree, term, root_props, old_root_props, widgets)
     local width, height = term.getSize()
 
     -- First part of the layout, compute the size "bottom up"
-    local function compute_natural_size_recursive(data)
+    local function compute_natural_size_recursive(data, old_data)
+        local needs_recompute = data.dirty or old_data == nil
+
         if data.children then
             for _, child_id in ipairs(data.children) do
                 local child_data = props_tree[child_id]
+                local child_old_data = old_props_tree[child_id]
 
-                compute_natural_size_recursive(child_data)
+                if compute_natural_size_recursive(child_data, child_old_data) then
+                    -- If the child changed size, we need to recompute our own size
+                    needs_recompute = true
+                end
             end
         end
 
-        local widget = widgets[data.type]
-        widget.compute_natural_size(props_tree, data.id)
+        if needs_recompute then
+            local widget = widgets[data.type]
+            widget.compute_natural_size(props_tree, data.id)
 
-        if type(data.natural_width) ~= "number" then
-            error(data.type .. " is not setting natural width properly: " .. tostring(data.natural_width))
-        elseif type(data.natural_height) ~= "number" then
-            error(data.type .. " is not setting natural height properly: " .. tostring(data.natural_height))
+            if type(data.natural_width) ~= "number" then
+                error(data.type .. " is not setting natural width properly: " .. tostring(data.natural_width))
+            elseif type(data.natural_height) ~= "number" then
+                error(data.type .. " is not setting natural height properly: " .. tostring(data.natural_height))
+            end
+
+            -- Check if the widget changed size
+            if old_data then
+                if old_data.natural_width ~= data.natural_width
+                    or old_data.natural_height ~= data.natural_height then
+                    data.dirty = true
+                    return true
+                end
+            else
+                return true
+            end
         end
+
+        -- Set the natural size from old data
+        data.natural_width = old_data.natural_width
+        data.natural_height = old_data.natural_height
+
+        return false
     end
 
     -- Call on the root widget
-    compute_natural_size_recursive(root_props)
+    compute_natural_size_recursive(root_props, old_root_props)
 
     -- Second part of the layout, compute the layout "top down"
     local function compute_children_layout_recursive(data)
-        local widget = widgets[data.type]
-        widget.compute_children_layout(props_tree, data.id)
+        local need_recompute = data.dirty
 
-        if type(data.width) ~= "number" then
-            error(data.type .. " is not setting final width properly: " .. tostring(data.width))
-        elseif type(data.height) ~= "number" then
-            error(data.type .. " is not setting final height properly: " .. tostring(data.height))
+        -- Check children dirtiness (skip if not needed)
+        if data.children and need_recompute then
+            for _, child_id in ipairs(data.children) do
+                local child_data = props_tree[child_id]
+                local child_old_data = old_props_tree[child_id]
+
+                if child_old_data then
+                    -- If the child changed size
+                    if child_data.width ~= child_old_data.width
+                        or child_data.height ~= child_old_data.height
+                        or child_data.h_expand ~= child_old_data.h_expand
+                        or child_data.v_expand ~= child_old_data.v_expand then
+                        need_recompute = true
+                    end
+                else
+                    need_recompute = true
+                end
+            end
+        end
+
+        if need_recompute then
+            local widget = widgets[data.type]
+            widget.compute_children_layout(props_tree, data.id)
         end
 
         if data.children then
             for _, child_id in ipairs(data.children) do
                 local child_data = props_tree[child_id]
+                local child_old_data = old_props_tree[child_id]
+
+                if not need_recompute then
+                    child_data.width = child_old_data.width
+                    child_data.height = child_old_data.height
+                    child_data.x = child_old_data.x
+                    child_data.y = child_old_data.y
+                elseif child_old_data then
+                    if child_data.width ~= child_old_data.width
+                        or child_data.height ~= child_old_data.height then
+                        child_data.dirty = true
+                    end
+                end
+
+                if type(child_data.width) ~= "number" then
+                    error(data.type .. " is not setting final width properly: " .. tostring(child_data.width))
+                elseif type(child_data.height) ~= "number" then
+                    error(data.type .. " is not setting final height properly: " .. tostring(child_data.height))
+                elseif type(child_data.x) ~= "number" then
+                    error(data.type .. " is not setting final x position properly: " .. tostring(child_data.x))
+                elseif type(child_data.y) ~= "number" then
+                    error(data.type .. " is not setting final y position properly: " .. tostring(child_data.y))
+                end
 
                 compute_children_layout_recursive(child_data)
             end
@@ -77,6 +144,16 @@ function render.update_layout(props_tree, render_tree, term, root_props, widgets
     -- Set the root widget's final size
     root_props.width = width
     root_props.height = height
+
+    -- Set dirty flag if size changed
+    if old_root_props then
+        if root_props.width ~= old_root_props.width
+            or root_props.height ~= old_root_props.height then
+            root_props.dirty = true
+        end
+    else
+        root_props.dirty = true
+    end
 
     -- Call on the root widget
     compute_children_layout_recursive(root_props)
@@ -101,9 +178,13 @@ function render.draw(props_tree, render_tree, term, root_props, widgets)
     end
 
     -- Draw the UI tree to the terminal
-    local function draw_recursive(data, render_data)
-        local widget = widgets[data.type]
-        widget.draw(props_tree, data.id, render_data.term)
+    local function draw_recursive(data, render_data, needs_blit)
+        if data.dirty or render_data == nil then
+            local widget = widgets[data.type]
+            widget.draw(props_tree, data.id, render_data.term)
+        elseif needs_blit then
+            render_data.term.redraw()
+        end
 
         if data.children then
             for _, child_id in ipairs(data.children) do
@@ -128,6 +209,7 @@ function render.draw(props_tree, render_tree, term, root_props, widgets)
                             child_render_data.width,
                             child_render_data.height
                         )
+                        child_data.dirty = true
                     end
                 else
                     child_render_data = {
@@ -150,7 +232,7 @@ function render.draw(props_tree, render_tree, term, root_props, widgets)
                 -- Set the visibility of the child widget's terminal
                 render_tree[child_id].term.setVisible(child_data.visible)
 
-                draw_recursive(child_data, child_render_data)
+                draw_recursive(child_data, child_render_data, needs_blit or data.dirty)
             end
         end
     end
@@ -169,7 +251,8 @@ function render.draw(props_tree, render_tree, term, root_props, widgets)
             root_props.height
         )
     }
-    draw_recursive(root_props, render_data)
+    render_tree[root_props.id] = render_data
+    draw_recursive(root_props, render_data, false)
 end
 
 return render

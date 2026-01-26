@@ -50,15 +50,15 @@ function widget.compute_natural_size(props_tree, id)
         -- Get child data
         local child_data = props_tree[child_id]
 
-        -- Update width
-        data.natural_width = math.max(data.natural_width, child_data.natural_width)
+        -- Update height
+        data.natural_height = math.max(data.natural_height, child_data.natural_height)
 
-        -- Update height (if first, don't add spacing)
+        -- Update width (if first, don't add spacing)
         if first then
-            data.natural_height = child_data.natural_height
+            data.natural_width = child_data.natural_width
             first = false
         else
-            data.natural_height = data.natural_height + child_data.natural_height + data.spacing
+            data.natural_width = data.natural_width + child_data.natural_width + data.spacing
         end
     end
 end
@@ -71,22 +71,22 @@ function widget.compute_children_layout(props_tree, id)
     for _, child_id in ipairs(data.children) do
         local child_data = props_tree[child_id]
 
-        if child_data.v_expand then
+        if child_data.h_expand then
             expand_number = expand_number + 1
         end
     end
 
-    local remaining_height = data.height - data.natural_height
-    local expand_height = math.floor(remaining_height / expand_number) -- Size of each expandable child
+    local remaining_width = data.width - data.natural_width
+    local expand_width = math.floor(remaining_width / expand_number) -- Size of each expandable child
     local first = true
     local offset = 1
 
-    -- If there are no expandable children, align the children vertically
+    -- If there are no expandable children, align the children horizontally
     if expand_number == 0 then
-        if flagger.test(data.align, const.ALIGN.HORIZON) then
-            offset = math.floor(remaining_height / 2)
-        elseif flagger.test(data.align, const.ALIGN.BOTTOM) then
-            offset = remaining_height
+        if flagger.test(data.align, const.ALIGN.CENTER) then
+            offset = math.floor(remaining_width / 2)
+        elseif flagger.test(data.align, const.ALIGN.RIGHT) then
+            offset = remaining_width
         end
     end
 
@@ -94,35 +94,35 @@ function widget.compute_children_layout(props_tree, id)
     for _, child_id in ipairs(data.children) do
         local child_data = props_tree[child_id]
 
-        if child_data.h_expand then
-            child_data.width = data.width
-        else
-            child_data.width = child_data.natural_width
-        end
-
         if child_data.v_expand then
-            child_data.height = child_data.natural_height + expand_height
+            child_data.height = data.height
         else
             child_data.height = child_data.natural_height
         end
 
-        -- Set default x position
-        child_data.x = 1
+        if child_data.h_expand then
+            child_data.width = child_data.natural_width + expand_width
+        else
+            child_data.width = child_data.natural_width
+        end
 
-        if flagger.test(data.align, const.ALIGN.CENTER) then
-            child_data.x = 1 + math.floor((data.width - child_data.width) / 2)
-        elseif flagger.test(data.align, const.ALIGN.RIGHT) then
-            child_data.x = 1 + data.width - child_data.width
+        -- Set default y position
+        child_data.y = 1
+
+        if flagger.test(data.align, const.ALIGN.HORIZON) then
+            child_data.y = 1 + math.floor((data.height - child_data.height) / 2)
+        elseif flagger.test(data.align, const.ALIGN.BOTTOM) then
+            child_data.y = 1 + data.height - child_data.height
         end
 
         if first then
-            child_data.y = offset
+            child_data.x = offset
             first = false
         else
-            child_data.y = offset + data.spacing
+            child_data.x = offset + data.spacing
         end
 
-        offset = child_data.y + child_data.height
+        offset = child_data.x + child_data.width
     end
 end
 

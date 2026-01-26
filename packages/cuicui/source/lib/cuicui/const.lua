@@ -16,7 +16,11 @@
     along with this program.  If not, see <https://www.gnu.org/licenses>.
 --]]
 
+local flagger = require("flagger")
+
 --- @export
 local const = {}
+
+const.ALIGN = flagger.make_flags("LEFT", "CENTER", "RIGHT", "TOP", "HORIZON", "BOTTOM")
 
 return const

@@ -22,6 +22,7 @@ import binascii
 import hashlib
 import json
 import os
+import re
 import zlib
 
 PACKAGES_ROOT_SRC_DIR = "./packages"
@@ -37,6 +38,7 @@ MANIFEST_FIELDS = [
 ]
 PACKAGES_POOL_DIR = "./pool"
 INDEX_FILE = "index.json"
+REMOVE_COMMENTS = True
 
 # Command-line arguments parser
 parser = argparse.ArgumentParser(description="CCPM build tool")
@@ -108,6 +110,15 @@ def build_package(name):
                 f"{PACKAGES_ROOT_SRC_DIR}/{name}/{PACKAGES_SRC_DIR}/{path}"
             ) as file:
                 content = file.read()
+
+                if REMOVE_COMMENTS:
+                    # Remove the multilines comments
+                    content = re.sub(
+                        r"--\[(=*)\[(.|\n)*?\]\1\]", "", content, 0, re.MULTILINE
+                    )
+
+                    # Remove the single line comments
+                    content = re.sub(r"^\s*--.*\n", "", content, 0, re.MULTILINE)
 
                 manifest["files"][path] = {
                     "content": content,
