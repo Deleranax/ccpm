@@ -102,7 +102,7 @@ def minify(content):
     content = re.sub(
         r"\[(=*)\[(.|\n)*?\]\1\]", "", content, count=0, flags=re.MULTILINE
     )
-    content = re.sub(r"^\s*--.*\n", "", content, count=0, flags=re.MULTILINE)
+    content = re.sub(r"\s*--.*$", "", content, count=0, flags=re.MULTILINE)
     content = re.sub(r"^\s+", "", content, count=0, flags=re.MULTILINE)
     content = re.sub(r"\n+", " ", content, count=0, flags=re.MULTILINE)
     return content
