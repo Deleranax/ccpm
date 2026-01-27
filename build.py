@@ -38,7 +38,7 @@ MANIFEST_FIELDS = [
 ]
 PACKAGES_POOL_DIR = "./pool"
 INDEX_FILE = "index.json"
-MINIFY_PACKAGES = True
+MINIFY_PACKAGES = False  # NOT WORKING
 
 # Command-line arguments parser
 parser = argparse.ArgumentParser(description="CCPM build tool")
@@ -102,7 +102,7 @@ def minify(content):
     content = re.sub(
         r"\[(=*)\[(.|\n)*?\]\1\]", "", content, count=0, flags=re.MULTILINE
     )
-    content = re.sub(r"\s*--.*$", "", content, count=0, flags=re.MULTILINE)
+    content = re.sub(r"""\s*--[^"'\n]*$""", "", content, count=0, flags=re.MULTILINE)
     content = re.sub(r"^\s+", "", content, count=0, flags=re.MULTILINE)
     content = re.sub(r"\n+", " ", content, count=0, flags=re.MULTILINE)
     return content
