@@ -27,6 +27,7 @@ local PACKAGES_OVERRIDE = {
     ["ccpm.eventutils"] = "libccpm",
     ["ccpm.transaction"] = "libccpm",
     ["ccpm.package"] = "libccpm",
+    ["ccpm.schema"] = "libccpm",
 }
 
 --- Get the download URL for a module.
@@ -91,44 +92,46 @@ parallel.waitForAny(
         print("Adding CCPM repository")
         local err = repo.add(CCPM_REPO_URL)
         if err then
-            error(err)
+            printError(err)
+            return
         end
 
         print("Updating index and manifests")
         err = repo.update()
         if err then
-            error(err)
+            printError(err)
+            return
         end
 
         print("Installing CCPM")
         err = trans.begin()
         if err then
-            error(err)
+            return
         end
 
         err = trans.install("ccpm")
         if err then
-            error(err)
+            return
         end
 
         err = trans.resolve_dependencies()
         if err then
-            error(err)
+            return
         end
 
         err = trans.commit()
         if err then
-            error(err)
+            return
         end
 
         print("CCPM installed successfully")
+
+        sleep(1)
+
+        term.setTextColor(colors.yellow)
+        print("Press any key to reboot")
+        os.pullEvent("key")
+        os.reboot()
     end,
     eventutils.process_transaction_events
 )
-
-sleep(1)
-
-term.setTextColor(colors.yellow)
-print("Press any key to reboot")
-os.pullEvent("key")
-os.reboot()

@@ -147,7 +147,7 @@ function schematics.compile(schema)
             if typ == "any" or type(var) == typ then
                 return true, nil
             else
-                return false, "At " .. path .. ": expected " .. typ .. ", got " .. type(var)
+                return false, "at " .. path .. ": expected " .. typ .. ", got " .. type(var)
             end
         elseif schema[typ] then
             local schema = schema[typ]
@@ -235,7 +235,7 @@ function schematics.compile(schema)
                 return true, nil
             end
 
-            return false, "At " .. path .. ": unknown type '" .. typ .. "'"
+            return false, "at " .. path .. ": unknown type '" .. typ .. "'"
         end
     end
 

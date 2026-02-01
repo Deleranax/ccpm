@@ -58,7 +58,7 @@ schema.PackageFile = {
     digest = { "string" },
 }
 
-schema.package = {
+schema.Package = {
     __inherits = { "PackageManifest" },
     files = { "map<string, PackageFile>" },
 }
