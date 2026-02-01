@@ -19,6 +19,7 @@
 local database = require("ccpm.database")
 local expect = require("cc.expect")
 local event = require("ccpm.eventutils")
+local schema = require("ccpm.schema")
 
 --- @export
 local repository = {}
@@ -132,6 +133,11 @@ function repository.fetch_manifest(url)
         return nil, err
     end
 
+    local valid, err = schema.validate(manifest, { "RepositoryManifest" })
+    if not valid then
+        return nil, "invalid manifest:\n" .. err
+    end
+
     return manifest, nil
 end
 
@@ -141,7 +147,7 @@ end
 function repository.add(url)
     local manifest, err = repository.fetch_manifest(url)
     if not manifest then
-        return nil, err
+        return err
     end
 
     local id, err = database.add_repository(manifest)
@@ -165,14 +171,14 @@ function repository.update()
 
         local driver, err = repository.get_driver(repo)
         if not driver then
-            err = "failed to get driver for repository: " .. err
+            err = "failed to get driver for repository " .. repo.name .. ": " .. err
             event.dispatch("ccpm_index_not_updated", id, err)
             return err
         end
 
         local manifest, err = repository.fetch_manifest(repo)
         if not manifest then
-            err = "failed to get manifest for repository: " .. err
+            err = "failed to get manifest for repository " .. repo.name .. ": " .. err
             event.dispatch("ccpm_index_not_updated", id, err)
             return err
         end
@@ -184,7 +190,14 @@ function repository.update()
 
         local index, err = driver.get_packages_index(manifest)
         if not index then
-            err = "failed to get packages index for repository: " .. err
+            err = "failed to get packages index for repository " .. repo.name .. ": " .. err
+            event.dispatch("ccpm_index_not_updated", id, err)
+            return err
+        end
+
+        local valid, err = schema.validate(index, { "RepositoryIndex" })
+        if not valid then
+            err = "invalid packages index for repository " .. repo.name .. ": " .. err
             event.dispatch("ccpm_index_not_updated", id, err)
             return err
         end

@@ -24,6 +24,7 @@ local expect     = require("cc.expect")
 local repository = require("ccpm.repository")
 local database   = require("ccpm.database")
 local event      = require("ccpm.eventutils")
+local schema     = require("ccpm.schema")
 
 --- @export
 local package    = {}
@@ -72,6 +73,11 @@ function package.unpack(package_path, output)
     data, err = textutils.unserializeJSON(data)
     if data == nil then
         return nil, "unable to parse package: " .. err
+    end
+
+    local valid, err = schema.validate(data, { "Package" })
+    if not valid then
+        return nil, "invalid package: " .. err
     end
 
     for path, pkg_file in pairs(data.files) do

@@ -112,7 +112,10 @@ function eventutils.make_progress(message, t)
     t = t or term
 
     return function(total, count, current)
-        local percentage = tostring(math.floor((count / total) * 100))
+        local percentage = "100"
+        if total > 0 then
+            percentage = tostring(math.floor((count / total) * 100))
+        end
         local last = total == count
 
         t.clearLine()
