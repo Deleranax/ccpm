@@ -174,6 +174,7 @@ local function repo_list()
         for id, r in pairs(repos) do
             table.insert(rows, { r.name, id })
         end
+        table.sort(rows, function(a, b) return a[1] < b[1] end)
         ctextutils.print_table(header, modes, rows)
     end
 end
@@ -251,6 +252,14 @@ local function transaction_summary()
             table.insert(rows, { " \24", name, version })
         end
     end
+
+    table.sort(rows, function(a, b)
+        if a[1] == b[1] then
+            return a[2] < b[2]
+        else
+            return a[1] > b[1]
+        end
+    end)
 
     if #rows == 0 then
         return ""
