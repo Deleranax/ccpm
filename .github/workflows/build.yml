@@ -31,39 +31,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.x"
-
       - name: Setup git
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Copy source files
-        run: |
-          mkdir /tmp/build-src
-          cp -r packages /tmp/build-src/
-          cp build.py manifest.json /tmp/build-src
-
-      - name: Switch to dist branch
-        run: |
-          git fetch origin dist
-          git checkout dist
-
-      - name: Move source files to dist branch
-        run: |
-          cp -r /tmp/build-src/* .
-
-      - name: Run build script
-        run: python build.py
-
-      - name: Commit changes
-        run: |
-          git add pool manifest.json
-          git diff --staged --quiet || git commit -m "Build: Update packages from commit ${{ github.sha }}"
-
-      - name: Push to dist branch
-        run: |
-          git push origin dist
+      - name: Build CCPM repository
+        uses: deleranax/ccpmbuild-action@v1

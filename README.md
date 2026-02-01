@@ -1,5 +1,25 @@
 # ComputerCraft Package Manager (CCPM)
 
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![CC:Tweaked](https://img.shields.io/badge/CC%3ATweaked-Compatible-green.svg)](https://tweaked.cc/)
+[![Built with ccpmbuild](https://img.shields.io/badge/Built%20with-ccpmbuild-orange.svg)](https://github.com/deleranax/ccpmbuild)
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/Deleranax/ccpm/build.yml?branch=main&label=build)](https://github.com/Deleranax/ccpm/actions)
+
+## About
+
+CCPM is a package manager for [CC:Tweaked](https://tweaked.cc/), bringing modern package management to ComputerCraft. It allows you to easily install, update, and manage Lua programs and libraries on your ComputerCraft computers, similar to how `apt`, `npm`, or `cargo` work in other ecosystems.
+
+**Key Features:**
+- 📦 **Simple Commands** - Install, update, and manage packages with an intuitive CLI
+- 🔄 **Multiple Repositories** - Support for custom package sources with priority-based resolution
+- 🔒 **Safe Operations** - Transaction system with automatic recovery from interruptions
+- 🌐 **Flexible Hosting** - Host repositories on GitHub, GitLab, or any static web server
+- 🛠️ **Automatic Dependencies** - Handles package dependencies without manual intervention
+
+Whether you're distributing your own ComputerCraft programs or using packages created by others, CCPM simplifies the process of managing code across your in-game computers.
+
+
+
 ## Installation
 
 You can install CCPM with the latest version of the installer downloaded directly from GitHub using the following command:
@@ -73,13 +93,11 @@ you'll need to use the raw URL directly.
 
 - A GitHub account
 - Basic knowledge of Git and GitHub
-- Python 3.x (for local testing)
 
 #### For Other Git Forges
 
 - An account on your chosen Git forge (GitLab, Bitbucket, Codeberg, Gitea/Forgejo, SourceHut, etc.)
 - Basic knowledge of Git
-- Python 3.x installed locally
 
 ### Repository Structure
 
@@ -95,12 +113,11 @@ your-repo/
 │       ├── manifest.json
 │       └── source/
 │           └── (your package files)
-├── build.py
 └── manifest.json  (repository metadata)
 ```
 
-Copy `build.py` and the root `manifest.json` from this repository. For GitHub, also copy `.github/workflows/build.yml`.
-For other forges, you'll need to create your own CI/CD configuration or deploy manually.
+Copy the root `manifest.json` from this repository. For GitHub, also copy `.github/workflows/build.yml` (which uses the `ccpmbuild-action`).
+For other forges, you'll need to create your own CI/CD configuration or build manually using `ccpmbuild`.
 
 The user will most likely have this repository configured as package source in their CCPM instances, which means that you
 **don't need to copy** this repository's packages in your own repository if you just wish to add them as dependencies for
@@ -212,10 +229,38 @@ Each package in the `packages/` directory must have:
 
 ### Building Locally
 
+CCPM uses [`ccpmbuild`](https://github.com/deleranax/ccpmbuild), a Rust-based build tool for building and managing CCPM repositories.
+
+#### Installing ccpmbuild
+
+Download pre-built binaries from the [ccpmbuild releases page](https://github.com/deleranax/ccpmbuild/releases), use the container image, or build from source:
+
+```sh
+# Using the container
+docker pull ghcr.io/deleranax/ccpmbuild:latest
+
+# Or build from source
+git clone https://github.com/deleranax/ccpmbuild.git
+cd ccpmbuild
+cargo build --release
+```
+
+#### Building Your Repository
+
 To test your repository locally before pushing:
 
 ```sh
-python build.py
+ccpmbuild build <SOURCE_PATH> <DEST_PATH>
+```
+
+Where:
+- `<SOURCE_PATH>` is the path to the directory containing your `manifest.json` and `packages/` directory (typically `.`)
+- `<DEST_PATH>` is the path where the `pool/` directory will be created
+
+To build with minification:
+
+```sh
+ccpmbuild build --minify <SOURCE_PATH> <DEST_PATH>
 ```
 
 This will create a `pool/` directory with all built packages and the index.
@@ -224,37 +269,40 @@ This will create a `pool/` directory with all built packages and the index.
 > The `pool/` directory is included in `.gitignore` to prevent it from being committed to the `main` branch during
 > local testing. The build process on the `dist` branch will generate this directory automatically.
 
-To repair a corrupted index:
-
-```sh
-python build.py --repair
-```
-
 ### CI/CD and Deployment
 
 > [!NOTE]
-> Running `build.py` with an existing `pool/` directory will update the index and keep older versions of packages
-> alongside the new ones. This allows CCPM to maintain a version history. If you prefer to clean the repository at
-> each build, you can add a deletion step in your CI/CD workflow or manually remove the `pool/` directory before
-> running the build script.
+> Running `ccpmbuild` with an existing `pool/` directory will update the index. By default, old package versions are removed.
+> If you want to keep older versions alongside new ones to maintain a version history, use the `keep` option in your CI/CD configuration.
 
 #### GitHub Actions (Automated)
 
-When you push to the `main` branch, the GitHub Actions workflow (`build.yml`) automatically:
+CCPM uses the [`ccpmbuild-action`](https://github.com/deleranax/ccpmbuild-action) for automated builds on GitHub.
+
+When you push to the `main` branch, the GitHub Actions workflow automatically:
 - Checks out your code
 - Switches to the `dist` branch
-- Runs `build.py` to:
+- Runs `ccpmbuild` to:
   - Read all packages from `packages/`
   - Compress and package each one as `.ccp` files
   - Generate an `index.json` with package metadata
   - Store everything in the `pool/` directory
 - Commits and pushes the built packages to the `dist` branch
 
+The `ccpmbuild-action` supports several options:
+- `minify`: Whether to minify Lua source code (default: `true`)
+- `source-path`: Repository source path containing `manifest.json` and `packages/` (default: `.`)
+- `branch-name`: Distribution branch name for built packages (default: `dist`)
+- `keep`: Whether to keep old package versions in the pool (default: `false`)
+- `keep-history`: Whether to maintain git history in the distribution branch (default: `false`)
+
+For detailed usage and examples, see the [ccpmbuild-action documentation](https://github.com/deleranax/ccpmbuild-action).
+
 Users can then configure CCPM to use your repository by pointing to the `dist` branch.
 
 #### Other CI/CD Platforms (Automated, for experienced users)
 
-Most Git forges provide CI/CD capabilities. Adapt the workflow from `.github/workflows/build.yml` to your platform:
+Most Git forges provide CI/CD capabilities. You can use `ccpmbuild` in your CI/CD pipelines:
 
 - GitLab CI: Create `.gitlab-ci.yml`
 - Gitea/Forgejo Actions: Similar to GitHub Actions syntax
@@ -263,12 +311,13 @@ Most Git forges provide CI/CD capabilities. Adapt the workflow from `.github/wor
 Key CI/CD requirements:
 - Trigger on pushes to `main` branch
 - Check out repository with full history
+- Install or use pre-built `ccpmbuild` binary (or use the container image)
 - Switch to `dist` branch
-- Run `python build.py`
+- Run `ccpmbuild build [--minify] <SOURCE_PATH> <DEST_PATH>`
 - Commit and push changes to `dist` branch
 - Configure write permissions and authentication (SSH keys, access tokens, etc.)
 
-The `build.py` script is platform-agnostic and works on any system with Python 3.x.
+You can download pre-built `ccpmbuild` binaries from the [releases page](https://github.com/deleranax/ccpmbuild/releases), use the container image at `ghcr.io/deleranax/ccpmbuild:latest`, or build from source using the provided Dockerfile.
 
 #### Manual Deployment
 
@@ -276,7 +325,7 @@ If you prefer not to set up CI/CD, you can deploy manually:
 
 ```sh
 # On main branch, build packages locally
-python build.py
+ccpmbuild build --minify . .
 
 # Switch to dist branch and deploy
 git checkout dist
@@ -324,15 +373,15 @@ it's not a Git forge. This provides maximum flexibility for custom hosting solut
 ### Prerequisites
 
 - A web server or hosting service (static file hosting, CDN, custom server, etc.)
-- Python 3.x installed locally for building packages
+- `ccpmbuild` installed locally for building packages (see [ccpmbuild repository](https://github.com/deleranax/ccpmbuild))
 - A way to upload/deploy files to your hosting service
 
 ### Setup Process
 
-1. Build your packages locally using the same structure and `build.py` script:
+1. Build your packages locally using `ccpmbuild`:
 
 ```sh
-python build.py
+ccpmbuild build --minify <SOURCE_PATH> <DEST_PATH>
 ```
 
 This generates a `pool/` directory containing:
@@ -366,7 +415,7 @@ ccpm update
 
 When you update packages:
 
-1. Run `python build.py` locally
+1. Run `ccpmbuild build --minify <SOURCE_PATH> <DEST_PATH>` locally
 2. Upload the updated `pool/` directory contents to your hosting service
 
 The manual deployment process is the same regardless of your hosting platform. You can automate this with your own
