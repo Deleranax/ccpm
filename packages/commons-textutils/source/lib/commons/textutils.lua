@@ -26,7 +26,9 @@ local ctextutils = {}
 --- @param width number: The maximum width for the text.
 --- @return string: The truncated text with ellipsis if needed.
 function ctextutils.truncate(text, width)
-    text = tostring(text)
+    expect(1, text, "string")
+    expect(2, width, "number")
+
     if #text <= width then
         return text
     else
@@ -43,7 +45,9 @@ end
 --- @param width number: The target width for the text.
 --- @return string: The padded or truncated text.
 function ctextutils.pad(text, width)
-    text = tostring(text)
+    expect(1, text, "string")
+    expect(2, width, "number")
+
     if #text >= width then
         return ctextutils.truncate(text, width)
     else
@@ -54,13 +58,22 @@ end
 --- Write text and move to the next line, scrolling if necessary.
 --- @param t table: The terminal to write to.
 --- @param text string: The text to write.
-function ctextutils.writeln(t, text)
+--- @param scroll_callback function | nil: Function called when scrolling.
+function ctextutils.writeln(t, text, scroll_callback)
+    expect(1, t, "table")
+    expect(2, text, "string")
+    expect(3, scroll_callback, "function", "nil")
+
     local _, height = t.getSize()
     t.write(text)
+
     local _, y = t.getCursorPos()
     if y >= height then
         t.scroll(1)
         t.setCursorPos(1, height)
+        if scroll_callback then
+            scroll_callback()
+        end
     else
         t.setCursorPos(1, y + 1)
     end
@@ -196,6 +209,9 @@ function ctextutils.print_table(header, modes, rows, t)
     end
     ctextutils.writeln(t, separator)
 
+    -- Relative cursor position
+    local y = 3
+
     -- Step 6: Print rows
     for _, row in ipairs(rows) do
         local row_line = ""
@@ -206,7 +222,27 @@ function ctextutils.print_table(header, modes, rows, t)
                 row_line = row_line .. " | "
             end
         end
-        ctextutils.writeln(t, row_line)
+
+        ctextutils.writeln(t, row_line, function()
+            y = y + 1
+
+            -- Rewrite the header and separator lines
+            if y >= height then
+                t.setCursorPos(1, 1)
+                t.write(header_line)
+                t.setCursorPos(1, 2)
+                t.write(separator)
+
+                t.setCursorPos(1, height)
+                t.write("\25 Press key to continue \25")
+                os.pullEvent("key")
+                t.setCursorPos(1, height)
+            end
+        end)
+    end
+
+    if y >= height then
+        t.clearLine()
     end
 end
 

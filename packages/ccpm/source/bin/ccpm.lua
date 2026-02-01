@@ -222,6 +222,7 @@ local function list_installed()
         for name, pkg in pairs(installed) do
             table.insert(rows, { name, pkg.version })
         end
+        table.sort(rows, function(a, b) return a[1] < b[1] end)
         ctextutils.print_table(header, modes, rows)
     end
 end
@@ -269,6 +270,7 @@ local function list_available()
         for name, pkg in pairs(available) do
             table.insert(rows, { name, pkg.latest_version })
         end
+        table.sort(rows, function(a, b) return a[1] < b[1] end)
         ctextutils.print_table(header, modes, rows)
     end
 end
