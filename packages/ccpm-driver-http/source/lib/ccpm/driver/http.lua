@@ -95,9 +95,9 @@ function httpd.download_package(manifest, name, version, path)
 
     local response = http.get(manifest.url .. "/pool/" .. filename)
     if not response then
-        return "failed to retrieve package"
+        return "failed to retrieve file " .. filename
     elseif response.getResponseCode() ~= 200 then
-        return "failed to retrieve package: " .. response.getResponseCode()
+        return "failed to retrieve file " .. filename .. ": " .. response.getResponseCode()
     end
 
     local content = response.readAll()
