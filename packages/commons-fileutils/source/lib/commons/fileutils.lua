@@ -1,5 +1,5 @@
 --[[
-    commons - A collection of common utilities
+    commons-fileutils - A collection of common utilities: file manipulation
     Copyright (C) 2026  Alexandre Leconte <aleconte@dwightstudio.fr>
 
     This program is free software: you can redistribute it and/or modify

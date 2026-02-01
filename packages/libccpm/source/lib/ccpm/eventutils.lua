@@ -16,7 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses>.
 --]]
 
-local ctextutils = require("commons.ctextutils")
+local ctextutils = require("commons.textutils")
 
 --- @export
 local eventutils = {}

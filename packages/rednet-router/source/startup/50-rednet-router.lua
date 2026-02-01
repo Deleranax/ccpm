@@ -20,8 +20,8 @@
 -- Copyright (C) 2017 Daniel Ratcliffe
 -- https://github.com/cc-tweaked/CC-Tweaked/blob/mc-1.20.x/projects/core/src/main/resources/data/computercraft/lua/rom/apis/rednet.lua
 
-local ctextutils = require("commons.ctextutils")
-local cfileutils = require("commons.cfileutils")
+local ctextutils = require("commons.textutils")
+local cfileutils = require("commons.fileutils")
 
 local LOOKUP_TABLE_FILE = "/.data/rednet-router/lookup_table.json"
 local REDNET_MESSAGE_STRUCT = {

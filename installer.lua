@@ -28,6 +28,8 @@ local PACKAGES_OVERRIDE = {
     ["ccpm.transaction"] = "libccpm",
     ["ccpm.package"] = "libccpm",
     ["ccpm.schema"] = "libccpm",
+    ["commons.table"] = "commons-table",
+    ["commons.textutils"] = "commons-textutils"
 }
 
 --- Get the download URL for a module.

@@ -17,8 +17,8 @@
 --]]
 
 local database    = require("ccpm.database")
-local ctextutils  = require("commons.ctextutils")
-local ctable      = require("commons.ctable")
+local ctextutils  = require("commons.textutils")
+local ctable      = require("commons.table")
 local repo        = require("ccpm.repository")
 local transaction = require("ccpm.transaction")
 local eventutils  = require("ccpm.eventutils")

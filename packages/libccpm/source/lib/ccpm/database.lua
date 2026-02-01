@@ -17,7 +17,7 @@
 --]]
 
 local uuid = require("uuid")
-local ctable = require("commons.ctable")
+local ctable = require("commons.table")
 local expect = require("cc.expect")
 local event = require("ccpm.eventutils")
 

@@ -19,7 +19,7 @@
 local expect = require("cc.expect")
 local render = require("cuicui.render")
 local event = require("cuicui.event")
-local ctable = require("commons.ctable")
+local ctable = require("commons.table")
 
 --- @export
 local cuicui = {}
