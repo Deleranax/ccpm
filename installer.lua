@@ -124,6 +124,8 @@ parallel.waitForAny(
             return
         end
 
+        sleep(1)
+
         print("CCPM installed successfully")
 
         sleep(1)
