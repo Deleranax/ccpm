@@ -1,5 +1,5 @@
 --[[
-    schematics - Lua structure schematics library
+    schematics - Lua structure schema definition library
     Copyright (C) 2026  Alexandre Leconte <aleconte@dwightstudio.fr>
 
     This program is free software: you can redistribute it and/or modify

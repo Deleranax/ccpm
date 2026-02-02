@@ -7,18 +7,50 @@
 
 ## About
 
-CCPM is a package manager for [CC:Tweaked](https://tweaked.cc/), bringing modern package management to ComputerCraft. It allows you to easily install, update, and manage Lua programs and libraries on your ComputerCraft computers, similar to how `apt`, `npm`, or `cargo` work in other ecosystems.
+CCPM is a package manager for [CC:Tweaked](https://tweaked.cc/), which simplifies the process of managing code across your in-game computers.
+It allows you to easily install, update, and manage Lua programs and libraries on your ComputerCraft computers.
 
 **Key Features:**
-- 📦 **Simple Commands** - Install, update, and manage packages with an intuitive CLI
-- 🔄 **Multiple Repositories** - Support for custom package sources with priority-based resolution
-- 🔒 **Safe Operations** - Transaction system with automatic recovery from interruptions
-- 🌐 **Flexible Hosting** - Host repositories on GitHub, GitLab, or any static web server
-- 🛠️ **Automatic Dependencies** - Handles package dependencies without manual intervention
+- ⚡ **Intuitive Interface** - Install, update, and manage packages with an intuitive CLI
+- 🛡️ **Transaction System** - Provides a transaction system with automatic recovery from interruptions
+- 🔗 **Automatic Dependencies** - Resolve package dependencies automatically across multiple repositories with priority-based resolution
+- 🌐 **Multiple Repositories** - Support for custom package repositories hosted on GitHub, GitLab, or any static web server
 
-Whether you're distributing your own ComputerCraft programs or using packages created by others, CCPM simplifies the process of managing code across your in-game computers.
+CCPM simplifies the process of managing code across your in-game computers. The dependency resolution system ensures that all required packages are installed and up-to-date, making it easy to manage complex projects.
+The dependency resolution is unversioned, meaning that it will always use the latest version of a package (meaning that unmaintained packages may break at any time).
 
+## Packages
 
+The official CCPM repository includes a variety of packages to help you build projects in CC:Tweaked. Here's a quick overview of some packages:
+
+**Core Packages:**
+- `ccpm-cli` - The CCPM command-line interface for managing packages
+- `libccpm` - Core library providing CCPM's package management functionality
+
+**User Interface:**
+- `cuicui` - Modular immediate mode GUI library for building interactive interfaces
+
+**Utilities:**
+- `flagger` - Simple flag utility library
+- `commons-fileutils` - File manipulation utilities
+- `commons-string` - String manipulation utilities
+- `commons-table` - Table manipulation utilities
+- `commons-textutils` - Text formatting and manipulation utilities
+
+**Networking:**
+- `rednet-router` - Router for Rednet packets
+- `rednet-utils` - Additional Rednet utilities
+
+**Data & Encryption:**
+- `lockbox` - Library for encrypting and decrypting data
+- `libdeflate` - Library for deflating and inflating data (compression)
+- `uuid` - UUID generation library
+- `schematics` - Lua structure schema definition library
+
+**Specialized:**
+- `scada-rtu` - SCADA Remote Terminal Unit for industrial control systems
+
+This is not an exhaustive list. To see all available packages, use `ccpm list available` on your computer or explore the [packages directory](https://github.com/Deleranax/ccpm/tree/main/packages) on GitHub.
 
 ## Installation
 

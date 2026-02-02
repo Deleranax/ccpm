@@ -1,5 +1,5 @@
 --[[
-    installer - ComputerCraft Package Manager installer
+    installer-craftos - ComputerCraft Package Manager installer for CraftOS
     Copyright (C) 2026  Alexandre Leconte <aleconte@dwightstudio.fr>
 
     This program is free software: you can redistribute it and/or modify
@@ -111,7 +111,7 @@ parallel.waitForAny(
             return
         end
 
-        err = trans.install("ccpm")
+        err = trans.install("ccpm-craftos")
         if err then
             return
         end

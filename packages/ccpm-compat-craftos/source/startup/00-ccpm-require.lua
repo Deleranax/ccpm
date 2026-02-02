@@ -1,5 +1,5 @@
 --[[
-    libccpm - Library for CCPM
+    ccpm-compat-craftos - CCPM compatibility package for CraftOS
     Copyright (C) 2026  Alexandre Leconte <aleconte@dwightstudio.fr>
 
     This program is free software: you can redistribute it and/or modify
