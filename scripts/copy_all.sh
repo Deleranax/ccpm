@@ -14,4 +14,4 @@ for package in $(ls -d ./packages/*/); do
 done
 
 # Copy the installer
-cp ./installer.lua "$DESTINATION"
+cp ./installer-craftos.lua "$DESTINATION"

@@ -1,5 +1,5 @@
 --[[
-    cuicui - Modular immediate mode GUI library
+    cuicui-widget-base - Base widget pack for cuicui
     Copyright (C) 2026  Alexandre Leconte <aleconte@dwightstudio.fr>
 
     This program is free software: you can redistribute it and/or modify

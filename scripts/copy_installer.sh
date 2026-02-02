@@ -9,4 +9,4 @@ DESTINATION=~/.local/share/ccemux/computer/0/
 rm -rf "${DESTINATION}"* "${DESTINATION}".[!.]* "${DESTINATION}"..?*
 
 # Copy the installer
-cp ./installer.lua "$DESTINATION"
+cp ./installer-craftos.lua "$DESTINATION"

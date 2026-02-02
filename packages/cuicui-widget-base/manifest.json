@@ -1,8 +1,8 @@
 {
-  "description": "Modular immediate mode GUI library",
+  "description": "Base widget pack for cuicui",
   "license": "GPL-3.0-or-later",
   "authors": ["Alexandre Leconte <aleconte@dwightstudio.fr>"],
   "maintainers": ["Alexandre Leconte <aleconte@dwightstudio.fr>"],
-  "version": "2.0.0",
-  "dependencies": ["cuicui-core", "cuicui-widget-base"]
+  "version": "1.0.0",
+  "dependencies": ["cuicui-core"]
 }
