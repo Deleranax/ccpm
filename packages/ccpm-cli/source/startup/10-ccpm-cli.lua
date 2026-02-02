@@ -18,9 +18,6 @@
 
 local database = require("ccpm.database")
 
--- Add bin to PATH
-shell.setPath(shell.path() .. ":/bin")
-
 -- Completion function
 local function complete(sh, index, arg, args)
     database.load_all()

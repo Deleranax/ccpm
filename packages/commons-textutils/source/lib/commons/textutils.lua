@@ -40,18 +40,22 @@ function ctextutils.truncate(text, width)
     end
 end
 
---- Pad text to a specified width with spaces, truncating if necessary.
+--- Pad text to a specified width, truncating if necessary.
 --- @param text string: The text to pad.
 --- @param width number: The target width for the text.
+--- @param char string | nil: The character to pad with, default is space.
 --- @return string: The padded or truncated text.
-function ctextutils.pad(text, width)
+function ctextutils.pad(text, width, char)
     expect(1, text, "string")
     expect(2, width, "number")
+    expect(3, char, "string", "nil")
+
+    char = char or " "
 
     if #text >= width then
         return ctextutils.truncate(text, width)
     else
-        return text .. string.rep(" ", width - #text)
+        return text .. string.rep(char, width - #text)
     end
 end
 
@@ -189,8 +193,15 @@ function ctextutils.print_table(header, modes, rows, t)
         end
     end
 
+    -- Compute the offset
+    local offset = width
+    for _, i in ipairs(col_widths) do
+        offset = offset - i
+    end
+    local offset_str = string.rep(" ", math.floor(math.max(offset, 0) / 2))
+
     -- Step 4: Print header
-    local header_line = ""
+    local header_line = offset_str
     for i = 1, num_cols do
         header_line = header_line .. ctextutils.pad(header[i], col_widths[i])
         if i < num_cols then
@@ -200,7 +211,7 @@ function ctextutils.print_table(header, modes, rows, t)
     ctextutils.writeln(t, header_line)
 
     -- Step 5: Print separator line
-    local separator = ""
+    local separator = offset_str
     for i = 1, num_cols do
         separator = separator .. string.rep("-", col_widths[i])
         if i < num_cols then
@@ -211,10 +222,12 @@ function ctextutils.print_table(header, modes, rows, t)
 
     -- Relative cursor position
     local y = 3
+    local continue_offset = math.floor((width - 25) / 2)
+    local continue_offset_str = string.rep(" ", continue_offset)
 
     -- Step 6: Print rows
     for _, row in ipairs(rows) do
-        local row_line = ""
+        local row_line = offset_str
         for i = 1, num_cols do
             local cell = row[i] or ""
             row_line = row_line .. ctextutils.pad(cell, col_widths[i])
@@ -234,15 +247,12 @@ function ctextutils.print_table(header, modes, rows, t)
                 t.write(separator)
 
                 t.setCursorPos(1, height)
-                t.write("\25 Press key to continue \25")
+                t.write(continue_offset_str .. "\25 Press key to continue \25")
                 os.pullEvent("key")
                 t.setCursorPos(1, height)
+                t.clearLine()
             end
         end)
-    end
-
-    if y >= height then
-        t.clearLine()
     end
 end
 

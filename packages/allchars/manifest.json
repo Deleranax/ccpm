@@ -1,8 +1,8 @@
 {
-  "description": "A collection of common utilities: text manipulation",
+  "description": "A small utility to print all characters",
   "license": "GPL-3.0-or-later",
   "authors": ["Alexandre Leconte <aleconte@dwightstudio.fr>"],
   "maintainers": ["Alexandre Leconte <aleconte@dwightstudio.fr>"],
-  "version": "1.1.1",
-  "dependencies": []
+  "version": "1.0.0",
+  "dependencies": ["commons-textutils"]
 }

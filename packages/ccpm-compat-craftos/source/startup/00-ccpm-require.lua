@@ -26,13 +26,16 @@ local function continue_execution()
     term.clear()
     term.setCursorPos(1, 1)
 
+    -- Add bin to PATH
+    shell.setPath("/bin:" .. shell.path())
+
     local sShell
     if term.isColour() and settings.get("bios.use_multishell") then
         sShell = "rom/programs/advanced/multishell.lua"
     else
         sShell = "rom/programs/shell.lua"
     end
-    os.run({}, sShell)
+    os.run({ ["shell"] = shell }, sShell)
     os.run({}, "rom/programs/shutdown.lua")
 end
 
