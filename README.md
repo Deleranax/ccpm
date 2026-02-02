@@ -1,9 +1,9 @@
 # ComputerCraft Package Manager (CCPM)
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![CC:Tweaked](https://img.shields.io/badge/CC%3ATweaked-Compatible-green.svg)](https://tweaked.cc/)
+[![CC:Tweaked](https://img.shields.io/badge/CC%3ATweaked-Compatible-green.svg?logo=lua&logoColor=white)](https://tweaked.cc/)
 [![Built with ccpmbuild](https://img.shields.io/badge/Built%20with-ccpmbuild-orange.svg)](https://github.com/deleranax/ccpmbuild)
-[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/Deleranax/ccpm/build.yml?branch=main&label=build)](https://github.com/Deleranax/ccpm/actions)
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/Deleranax/ccpm/build.yml?branch=main&label=Build)](https://github.com/Deleranax/ccpm/actions)
 
 ## About
 
