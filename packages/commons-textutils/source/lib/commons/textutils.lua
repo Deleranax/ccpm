@@ -195,8 +195,11 @@ function ctextutils.print_table(header, modes, rows, t)
 
     -- Compute the offset
     local offset = width
-    for _, i in ipairs(col_widths) do
-        offset = offset - i
+    for i = 1, num_cols do
+        offset = offset - col_widths[i]
+        if i < num_cols then
+            offset = offset - 3
+        end
     end
     local offset_str = string.rep(" ", math.floor(math.max(offset, 0) / 2))
 

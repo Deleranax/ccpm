@@ -115,3 +115,8 @@ os.run = function(...)
     replace_version()
     continue_execution()
 end
+
+-- Stop the multishell
+if term.isColor() then
+    os.queueEvent("terminate")
+end
