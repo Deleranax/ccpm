@@ -16,25 +16,62 @@
     along with this program.  If not, see <https://www.gnu.org/licenses>.
 --]]
 
-local flagger       = require("flagger")
-local const         = require("cuicui.const")
+local flagger = require("flagger")
+local const   = require("cuicui.const")
+
+--- Horizontal widget - arranges child widgets in a horizontal row.
+---
+--- A container that organizes its children horizontally from left to right. You can control
+--- spacing between children, alignment, and how children expand to fill available space.
+---
+--- **Properties:**
+--- - `spacing` (number): Gap in pixels between each child widget (default: 0)
+--- - `color` (number, optional): Background color for the container area
+--- - `fill` (boolean): Currently unused (default: false)
+--- - `align` (number): Alignment flags using `const.ALIGN` constants (default: LEFT + TOP)
+---   - Horizontal: `ALIGN.LEFT`, `ALIGN.CENTER`, `ALIGN.RIGHT`
+---   - Vertical: `ALIGN.TOP`, `ALIGN.HORIZON` (center), `ALIGN.BOTTOM`
+---   - Combine with `+` operator (e.g., `const.ALIGN.CENTER + const.ALIGN.HORIZON`)
+---
+--- Children can use `h_expand` and `v_expand` properties to grow and fill available space.
+---
+--- **Example:**
+--- ```lua
+--- ui.horizontal(function(ui)
+---     ui.spacing = 2
+---     ui.align = const.ALIGN.LEFT + const.ALIGN.HORIZON
+---     ui.color = colors.black
+---
+---     ui.label(function(ui)
+---         ui.text = "Item 1"
+---     end)
+---     ui.label(function(ui)
+---         ui.text = "Item 2"
+---     end)
+--- end)
+--- ```
 
 --- @export
-local widget        = {}
+local widget  = {}
 
-widget.PROPS        = {
+widget.PROPS  = {
     spacing = { "number" },
     color = { "number" },
     fill = { "boolean" },
     align = { "number" },
 }
 
-widget.IS_CONTAINER = true
+function widget.populate_default_props(props, old_props)
+    props.spacing = 0
+    props.fill = false
+    props.align = const.ALIGN.LEFT + const.ALIGN.TOP
+end
 
-function widget.populate_default_props(props)
-    props.spacing = props.spacing or 0
-    props.fill = props.fill or false
-    props.align = props.align or const.ALIGN.LEFT + const.ALIGN.TOP
+function widget.accept_child(props_tree, id, child_props)
+    return nil
+end
+
+function widget.compose(props, ui)
 end
 
 function widget.compute_natural_size(props_tree, id)
@@ -135,19 +172,7 @@ function widget.draw(props_tree, id, term)
     end
 end
 
-function widget.handle_click(props_tree, id, x, y, button)
-end
-
-function widget.handle_click_up(props_tree, id, x, y, button)
-end
-
-function widget.handle_key(props_tree, id, key, held)
-end
-
-function widget.handle_key_up(props_tree, id, key)
-end
-
-function widget.handle_lost_focus(props_tree, id)
+function widget.handle_event(props_tree, id, sch, event)
 end
 
 return widget

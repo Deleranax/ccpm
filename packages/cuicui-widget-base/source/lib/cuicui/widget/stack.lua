@@ -19,34 +19,38 @@
 local flagger = require("flagger")
 local const   = require("cuicui.const")
 
---- Vertical widget - arranges child widgets in a vertical stack.
+--- Stack widget - overlays child widgets on top of each other.
 ---
---- A container that organizes its children vertically from top to bottom. You can control
---- spacing between children, alignment, and how children expand to fill available space.
+--- A container that places all children in the same position, stacking them in layers.
+--- Children are drawn in order, so later children appear on top of earlier ones.
+--- Each child fills the entire stack area.
 ---
 --- **Properties:**
---- - `spacing` (number): Gap in pixels between each child widget (default: 0)
 --- - `color` (number, optional): Background color for the container area
---- - `fill` (boolean): Currently unused (default: false)
 --- - `align` (number): Alignment flags using `const.ALIGN` constants (default: LEFT + TOP)
 ---   - Horizontal: `ALIGN.LEFT`, `ALIGN.CENTER`, `ALIGN.RIGHT`
 ---   - Vertical: `ALIGN.TOP`, `ALIGN.HORIZON` (center), `ALIGN.BOTTOM`
 ---   - Combine with `+` operator (e.g., `const.ALIGN.CENTER + const.ALIGN.HORIZON`)
 ---
---- Children can use `h_expand` and `v_expand` properties to grow and fill available space.
+--- Children can use `h_expand` and `v_expand` properties to control whether they fill
+--- the entire stack area or use their natural size.
 ---
 --- **Example:**
 --- ```lua
---- ui.vertical(function(ui)
----     ui.spacing = 1
----     ui.align = const.ALIGN.CENTER + const.ALIGN.TOP
+--- ui.stack(function(ui)
+---     ui.align = const.ALIGN.CENTER + const.ALIGN.HORIZON
 ---     ui.color = colors.black
 ---
----     ui.label(function(ui)
----         ui.text = "First item"
+---     -- Background layer
+---     ui.box(function(ui)
+---         ui.color = colors.blue
+---         ui.h_expand = true
+---         ui.v_expand = true
 ---     end)
+---     -- Foreground label
 ---     ui.label(function(ui)
----         ui.text = "Second item"
+---         ui.text = "Overlay text"
+---         ui.color = colors.white
 ---     end)
 --- end)
 --- ```
@@ -55,15 +59,11 @@ local const   = require("cuicui.const")
 local widget  = {}
 
 widget.PROPS  = {
-    spacing = { "number" },
-    color = { "number" },
-    fill = { "boolean" },
+    color = { "number", "nil" },
     align = { "number" },
 }
 
 function widget.populate_default_props(props, old_props)
-    props.spacing = 0
-    props.fill = false
     props.align = const.ALIGN.LEFT + const.ALIGN.TOP
 end
 
@@ -76,61 +76,29 @@ end
 
 function widget.compute_natural_size(props_tree, id)
     local data = props_tree[id]
-    local first = true
 
     -- Set default width and height
     data.natural_width = 0
     data.natural_height = 0
 
-    -- Iterate over children to compute the size
+    -- Iterate over children to compute the size (take the maximum of all children)
     for _, child_id in ipairs(data.children) do
-        -- Get child data
         local child_data = props_tree[child_id]
 
-        -- Update width
+        -- Update width and height to the maximum
         data.natural_width = math.max(data.natural_width, child_data.natural_width)
-
-        -- Update height (if first, don't add spacing)
-        if first then
-            data.natural_height = child_data.natural_height
-            first = false
-        else
-            data.natural_height = data.natural_height + child_data.natural_height + data.spacing
-        end
+        data.natural_height = math.max(data.natural_height, child_data.natural_height)
     end
 end
 
 function widget.compute_children_layout(props_tree, id)
     local data = props_tree[id]
-    local expand_number = 0
 
-    -- Iterate over children to compute the expand number
+    -- All children are positioned at the same location, stacked on top of each other
     for _, child_id in ipairs(data.children) do
         local child_data = props_tree[child_id]
 
-        if child_data.v_expand then
-            expand_number = expand_number + 1
-        end
-    end
-
-    local remaining_height = data.height - data.natural_height
-    local expand_height = math.floor(remaining_height / expand_number) -- Size of each expandable child
-    local first = true
-    local offset = 1
-
-    -- If there are no expandable children, align the children vertically
-    if expand_number == 0 then
-        if flagger.test(data.align, const.ALIGN.HORIZON) then
-            offset = math.floor(remaining_height / 2)
-        elseif flagger.test(data.align, const.ALIGN.BOTTOM) then
-            offset = remaining_height
-        end
-    end
-
-    -- Iterate over children to compute the layout
-    for _, child_id in ipairs(data.children) do
-        local child_data = props_tree[child_id]
-
+        -- Compute child size based on expand flags
         if child_data.h_expand then
             child_data.width = data.width
         else
@@ -138,28 +106,28 @@ function widget.compute_children_layout(props_tree, id)
         end
 
         if child_data.v_expand then
-            child_data.height = child_data.natural_height + expand_height
+            child_data.height = data.height
         else
             child_data.height = child_data.natural_height
         end
 
-        -- Set default x position
-        child_data.x = 1
-
+        -- Horizontal alignment
         if flagger.test(data.align, const.ALIGN.CENTER) then
             child_data.x = 1 + math.floor((data.width - child_data.width) / 2)
         elseif flagger.test(data.align, const.ALIGN.RIGHT) then
             child_data.x = 1 + data.width - child_data.width
-        end
-
-        if first then
-            child_data.y = offset
-            first = false
         else
-            child_data.y = offset + data.spacing
+            child_data.x = 1
         end
 
-        offset = child_data.y + child_data.height
+        -- Vertical alignment
+        if flagger.test(data.align, const.ALIGN.HORIZON) then
+            child_data.y = 1 + math.floor((data.height - child_data.height) / 2)
+        elseif flagger.test(data.align, const.ALIGN.BOTTOM) then
+            child_data.y = 1 + data.height - child_data.height
+        else
+            child_data.y = 1
+        end
     end
 end
 

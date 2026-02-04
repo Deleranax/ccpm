@@ -30,7 +30,7 @@ local function continue_execution()
     term.setCursorPos(1, 1)
 
     local sShell
-    if term.isColour() and settings.get("bios.use_multishell") then
+    if term.isColor() and settings.get("bios.use_multishell") then
         sShell = "rom/programs/advanced/multishell.lua"
     else
         sShell = "rom/programs/shell.lua"

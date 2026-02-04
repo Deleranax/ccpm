@@ -16,20 +16,44 @@
     along with this program.  If not, see <https://www.gnu.org/licenses>.
 --]]
 
+--- Label widget - displays a single line of text.
+---
+--- A simple text display widget that shows a string with configurable colors.
+--- Labels cannot contain child widgets.
+---
+--- **Properties:**
+--- - `text` (string): The text content to display
+--- - `color` (number): Text color (use ComputerCraft color constants)
+--- - `background_color` (number, optional): Background color for the label area
+---
+--- **Example:**
+--- ```lua
+--- ui.label(function(ui)
+---     ui.text = "Hello, world!"
+---     ui.color = colors.white
+---     ui.background_color = colors.blue
+--- end)
+--- ```
+
 --- @export
 local widget = {}
 
 widget.PROPS = {
     text = { "string" },
     color = { "number" },
-    background_color = { "number" }
+    background_color = { "number", "nil" }
 }
 
-widget.IS_CONTAINER = false
+function widget.populate_default_props(props, old_props)
+    props.text = "Label #" .. props.id
+    props.color = colors.white
+end
 
-function widget.populate_default_props(props)
-    props.text = props.text or ("Label #" .. props.id)
-    props.color = props.color or colors.white
+function widget.accept_child(props_tree, id, child_props)
+    return "Labels cannot have children"
+end
+
+function widget.compose(props, ui)
 end
 
 function widget.compute_natural_size(props_tree, id)
@@ -47,7 +71,7 @@ function widget.draw(props_tree, id, term)
     local data = props_tree[id]
 
     if data.background_color then
-        term.setBackgroundColour(data.background_color)
+        term.setBackgroundColor(data.background_color)
         term.clear()
     end
 
@@ -56,19 +80,7 @@ function widget.draw(props_tree, id, term)
     term.write(data.text)
 end
 
-function widget.handle_click(props_tree, id, x, y, button)
-end
-
-function widget.handle_click_up(props_tree, id, x, y, button)
-end
-
-function widget.handle_key(props_tree, id, key, held)
-end
-
-function widget.handle_key_up(props_tree, id, key)
-end
-
-function widget.handle_lost_focus(props_tree, id)
+function widget.handle_event(props_tree, id, sch, event)
 end
 
 return widget

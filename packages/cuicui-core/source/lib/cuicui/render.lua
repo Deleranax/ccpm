@@ -253,6 +253,12 @@ function render.draw(props_tree, render_tree, term, root_props, widgets)
     }
     render_tree[root_props.id] = render_data
     draw_recursive(root_props, render_data, false)
+
+    -- Set the cursor position to the top-left corner of the terminal
+    -- For debugging purposes
+    term.setCursorPos(1, 1)
+    term.setTextColor(colors.white)
+    term.setBackgroundColor(colors.black)
 end
 
 return render

@@ -57,7 +57,7 @@ This is not an exhaustive list. To see all available packages, use `ccpm list av
 You can install CCPM with the latest version of the installer downloaded directly from GitHub using the following command:
 
 ```sh
-wget run https://raw.githubusercontent.com/Deleranax/ccpm/refs/heads/main/installer.lua
+wget run https://raw.githubusercontent.com/Deleranax/ccpm/refs/heads/main/installer-craftos.lua
 ```
 
 You can also install CCPM from Pastebin using the following command:
