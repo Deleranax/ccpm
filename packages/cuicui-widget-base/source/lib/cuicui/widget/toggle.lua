@@ -97,15 +97,12 @@ function widget.draw(props_tree, id, term)
     end
 end
 
--- function widget.handle_click(props_tree, id, x, y, button)
---     if button == 1 then
---         local data = props_tree[id]
-
---         data.active = not data.active
---     end
--- end
-
 function widget.handle_event(props_tree, id, sch, event)
+    if event[1] == "mouse_click" then
+        local data = props_tree[id]
+
+        data.active = not data.active
+    end
 end
 
 return widget

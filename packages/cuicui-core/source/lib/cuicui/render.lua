@@ -68,11 +68,11 @@ function render.update_layout(props_tree, old_props_tree, term, root_props, old_
             else
                 return true
             end
+        else
+            -- Set the natural size from old data
+            data.natural_width = old_data.natural_width
+            data.natural_height = old_data.natural_height
         end
-
-        -- Set the natural size from old data
-        data.natural_width = old_data.natural_width
-        data.natural_height = old_data.natural_height
 
         return false
     end
@@ -85,7 +85,7 @@ function render.update_layout(props_tree, old_props_tree, term, root_props, old_
         local need_recompute = data.dirty
 
         -- Check children dirtiness (skip if not needed)
-        if data.children and need_recompute then
+        if not need_recompute then
             for _, child_id in ipairs(data.children) do
                 local child_data = props_tree[child_id]
                 local child_old_data = old_props_tree[child_id]
@@ -109,35 +109,33 @@ function render.update_layout(props_tree, old_props_tree, term, root_props, old_
             widget.compute_children_layout(props_tree, data.id)
         end
 
-        if data.children then
-            for _, child_id in ipairs(data.children) do
-                local child_data = props_tree[child_id]
-                local child_old_data = old_props_tree[child_id]
+        for _, child_id in ipairs(data.children) do
+            local child_data = props_tree[child_id]
+            local child_old_data = old_props_tree[child_id]
 
-                if not need_recompute then
-                    child_data.width = child_old_data.width
-                    child_data.height = child_old_data.height
-                    child_data.x = child_old_data.x
-                    child_data.y = child_old_data.y
-                elseif child_old_data then
-                    if child_data.width ~= child_old_data.width
-                        or child_data.height ~= child_old_data.height then
-                        child_data.dirty = true
-                    end
+            if not need_recompute then
+                child_data.width = child_old_data.width
+                child_data.height = child_old_data.height
+                child_data.x = child_old_data.x
+                child_data.y = child_old_data.y
+            elseif child_old_data then
+                if child_data.width ~= child_old_data.width
+                    or child_data.height ~= child_old_data.height then
+                    child_data.dirty = true
                 end
-
-                if type(child_data.width) ~= "number" then
-                    error(data.type .. " is not setting final width properly: " .. tostring(child_data.width))
-                elseif type(child_data.height) ~= "number" then
-                    error(data.type .. " is not setting final height properly: " .. tostring(child_data.height))
-                elseif type(child_data.x) ~= "number" then
-                    error(data.type .. " is not setting final x position properly: " .. tostring(child_data.x))
-                elseif type(child_data.y) ~= "number" then
-                    error(data.type .. " is not setting final y position properly: " .. tostring(child_data.y))
-                end
-
-                compute_children_layout_recursive(child_data)
             end
+
+            if type(child_data.width) ~= "number" then
+                error(data.type .. " is not setting final width properly: " .. tostring(child_data.width))
+            elseif type(child_data.height) ~= "number" then
+                error(data.type .. " is not setting final height properly: " .. tostring(child_data.height))
+            elseif type(child_data.x) ~= "number" then
+                error(data.type .. " is not setting final x position properly: " .. tostring(child_data.x))
+            elseif type(child_data.y) ~= "number" then
+                error(data.type .. " is not setting final y position properly: " .. tostring(child_data.y))
+            end
+
+            compute_children_layout_recursive(child_data)
         end
     end
 
@@ -165,10 +163,10 @@ end
 --- @param term table: The terminal to draw to.
 --- @param root_props table: The root properties.
 --- @param widgets table: The widgets table.
-function render.draw(props_tree, render_tree, term, root_props, widgets)
+--- @param debug boolean: Whether to draw debug information.
+function render.draw(props_tree, render_tree, term, root_props, widgets, debug)
     -- Decrease the time left for each widget
-    for _, widget_id in ipairs(render_tree) do
-        local render_data = render_tree[widget_id]
+    for widget_id, render_data in pairs(render_tree) do
         render_data.timeout = render_data.timeout - 1
 
         -- Discard window if time is up
@@ -178,12 +176,26 @@ function render.draw(props_tree, render_tree, term, root_props, widgets)
     end
 
     -- Draw the UI tree to the terminal
-    local function draw_recursive(data, render_data, needs_blit)
+    local function draw_recursive(data, render_data)
         if data.dirty or render_data == nil then
-            local widget = widgets[data.type]
-            widget.draw(props_tree, data.id, render_data.term)
-        elseif needs_blit then
-            render_data.term.redraw()
+            if debug then
+                local term = render_data.term
+                term.setBackgroundColor(colors.green)
+                term.clear()
+            else
+                local widget = widgets[data.type]
+                widget.draw(props_tree, data.id, render_data.term)
+            end
+        else
+            if debug then
+                local term = render_data.term
+                term.setBackgroundColor(colors.white)
+                term.clear()
+            else
+                if render_data.term.redraw then
+                    render_data.term.redraw()
+                end
+            end
         end
 
         if data.children then
@@ -204,8 +216,8 @@ function render.draw(props_tree, render_tree, term, root_props, widgets)
                         child_render_data.timeout = render.WINDOW_TIMEOUT
 
                         child_render_data.term.reposition(
-                            child_data.x,
-                            child_data.y,
+                            child_render_data.x,
+                            child_render_data.y,
                             child_render_data.width,
                             child_render_data.height
                         )
@@ -232,33 +244,31 @@ function render.draw(props_tree, render_tree, term, root_props, widgets)
                 -- Set the visibility of the child widget's terminal
                 render_tree[child_id].term.setVisible(child_data.visible)
 
-                draw_recursive(child_data, child_render_data, needs_blit or data.dirty)
+                draw_recursive(child_data, child_render_data)
             end
         end
     end
 
-    -- Call on the root widget to draw the UI tree
-    local render_data = {
-        width = root_props.width,
-        height = root_props.height,
-        x = 1,
-        y = 1,
-        term = window.create(
-            term,
-            1,
-            1,
-            root_props.width,
-            root_props.height
-        )
-    }
-    render_tree[root_props.id] = render_data
-    draw_recursive(root_props, render_data, false)
+    -- Setup root widget render data
+    if not render_tree[root_props.id] then
+        render_tree[root_props.id] = {
+            width = root_props.width,
+            height = root_props.height,
+            x = 1,
+            y = 1,
+            term = window.create(
+                term,
+                1,
+                1,
+                root_props.width,
+                root_props.height
+            ),
+            timeout = render.WINDOW_TIMEOUT
+        }
+    end
 
-    -- Set the cursor position to the top-left corner of the terminal
-    -- For debugging purposes
-    term.setCursorPos(1, 1)
-    term.setTextColor(colors.white)
-    term.setBackgroundColor(colors.black)
+    -- Call on the root widget to draw the UI tree
+    draw_recursive(root_props, render_tree[root_props.id])
 end
 
 return render

@@ -19,7 +19,6 @@
 local expect = require("cc.expect")
 local render = require("cuicui.render")
 local event = require("cuicui.event")
-local ctable = require("commons.table")
 
 --- @export
 local cuicui = {}
@@ -383,7 +382,9 @@ cuicui.EVENT_STATES = {
     -- Number value when widget is clicked (which button) or nil.
     click = { "number", "nil" },
     -- Cursor position (x: [1], y: [2]) when the widget is clicked or nil.
-    cursor = { "table", "nil" }
+    cursor = { "table", "nil" },
+    -- Keys pressed.
+    keys = { "table", "nil" },
 }
 
 --- Index widgets table
@@ -460,13 +461,57 @@ local function set_dirtiness(props, old_props)
         return
     end
 
+    -- Helper function to recursively compare values
+    local function values_equal(v1, v2)
+        local t1, t2 = type(v1), type(v2)
+
+        -- Different types are not equal
+        if t1 ~= t2 then
+            return false
+        end
+
+        -- For tables, recursively compare contents
+        if t1 == "table" then
+            -- Check all keys in v1 exist in v2 with equal values
+            for k, val in pairs(v1) do
+                if not values_equal(val, v2[k]) then
+                    return false
+                end
+            end
+
+            -- Check all keys in v2 exist in v1 (to catch extra keys)
+            for k in pairs(v2) do
+                if v1[k] == nil then
+                    return false
+                end
+            end
+
+            return true
+        else
+            -- For non-tables, use direct equality
+            return v1 == v2
+        end
+    end
+
+    -- Compare all keys except EVENT_STATES
     for key, value in pairs(props) do
-        if not cuicui.EVENT_STATES[key] and old_props[key] ~= value then
+        if not cuicui.EVENT_STATES[key] then
+            if not values_equal(value, old_props[key]) then
+                props.dirty = true
+                return
+            end
+        end
+    end
+
+    -- Check for removed keys (keys in old_props but not in props)
+    for key in pairs(old_props) do
+        if not cuicui.EVENT_STATES[key] and props[key] == nil then
             props.dirty = true
             return
         end
     end
 
+    -- No differences found
     props.dirty = false
 end
 
@@ -605,7 +650,15 @@ local function index_cuicui(_, key)
 
             -- Render the UI
             render.update_layout(props_tree, old_props_tree, term, root_props, old_root_props, widgets)
-            render.draw(props_tree, render_tree, term, root_props, widgets)
+            render.draw(props_tree, render_tree, term, root_props, widgets, cuicui.DEBUG)
+
+            -- Set the cursor position to the top-left corner of the terminal
+            -- For debugging purposes
+            if cuicui.DEBUG then
+                term.setCursorPos(1, 1)
+                term.setTextColor(colors.white)
+                term.setBackgroundColor(colors.black)
+            end
 
             -- Wait and process events until the UI needs to be updated
             if not event.process(props_tree, render_tree, widgets, root_props, monitor_name) then
@@ -614,17 +667,8 @@ local function index_cuicui(_, key)
                 return
             end
 
-            -- Log the tree to a file
-            if cuicui.DEBUG then
-                props_tree["_timestamp"] = os.time()
-                local file = fs.open(cuicui.DEBUG_LOG_FILE, "w")
-                file.write(textutils.serialize(props_tree))
-                file.close()
-                props_tree["_timestamp"] = nil
-            end
-
             -- Clear the tree
-            old_props_tree = ctable.copy(props_tree)
+            old_props_tree = props_tree
             props_tree = { [root_props.id] = root_props }
             root_props.children = {}
         end

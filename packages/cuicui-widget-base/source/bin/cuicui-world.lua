@@ -24,7 +24,7 @@ local const   = require("cuicui.const")
 -- Set the debug mode
 cuicui.DEBUG  = false
 
-local counter = 11
+local counter = 1
 
 cuicui.vertical(term.current(), function(ui)
     ui.color = colors.lightGray
