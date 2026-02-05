@@ -23,7 +23,7 @@ local event = require("cuicui.event")
 --- @export
 local cuicui = {}
 
--- TODO: Change event system to a single handle + top to bottom resolution
+-- TODO: Continue refactoring new tree structure (strict separation from props, render, dirty, buffer)
 
 --- Debug
 cuicui.DEBUG = false
@@ -253,7 +253,7 @@ cuicui.WIDGET_MODULE_STRUCT = {
     ---
     --- @param props_tree table: Map of widget IDs to their properties (forms a tree via parent/child references)
     --- @param id any: The ID key for this widget in the props_tree
-    --- @param term table: ComputerCraft Redirect object (terminal, monitor, or window) to draw on
+    --- @param term term.Redirect: ComputerCraft Redirect object (terminal, monitor, or window) to draw on
     draw = { "function" },
 
     --- Handles OS events that occur on this widget.
@@ -422,12 +422,13 @@ local widgets = setmetatable({}, {
 })
 
 --- Create the base properties of a widget
+---
+--- @param tree table: The UI tree.
 --- @param key string: The name of the widget.
 --- @param parent_id any: The parent ID of the widget.
 --- @param widget table: The widget table.
---- @param old_props_tree table: The old properties tree.
 --- @return table: The widget properties.
-local function make_props(key, parent_id, widget, old_props_tree)
+local function make_props(tree, key, parent_id, widget)
     local props = {
         type = key,
         parent = parent_id,
@@ -437,7 +438,7 @@ local function make_props(key, parent_id, widget, old_props_tree)
         v_expand = false,
         children = {}
     }
-    local old_props = old_props_tree[props.id];
+    local old_props = tree.old_props[props.id];
 
     -- Propagate event states
     if old_props then
@@ -453,9 +454,11 @@ local function make_props(key, parent_id, widget, old_props_tree)
 end
 
 --- Check if the properties have changed (outside render values)
+--- @param tree table: The UI tree.
 --- @param props table: The new properties.
---- @param old_props table: The old properties.
-local function set_dirtiness(props, old_props)
+local function set_dirtiness(tree, props)
+    local old_props = tree.old_props[props.id];
+
     if old_props == nil then
         props.dirty = true
         return
@@ -516,10 +519,9 @@ local function set_dirtiness(props, old_props)
 end
 
 --- Make a new UI table
+--- @param tree table: The UI tree.
 --- @param parent_props table: The parent ID of the widget.
---- @param old_props_tree table: The old properties tree.
---- @param props_tree table: The properties tree to populate.
-local function make_ui(parent_props, old_props_tree, props_tree)
+local function make_ui(tree, parent_props)
     local parent_widget = widgets[parent_props.type]
 
     local function index(_, key)
@@ -532,7 +534,7 @@ local function make_ui(parent_props, old_props_tree, props_tree)
         else
             for state in pairs(cuicui.EVENT_STATES) do
                 if key == state then
-                    local old_parent_props = old_props_tree[parent_props.id]
+                    local old_parent_props = tree.old_props[parent_props.id]
                     if old_parent_props then
                         return old_parent_props[state]
                     else
@@ -550,10 +552,10 @@ local function make_ui(parent_props, old_props_tree, props_tree)
             expect(1, fn, "function", "nil")
 
             -- Create the widget properties
-            local props = make_props(key, parent_props.id, widget, old_props_tree)
+            local props = make_props(tree, key, parent_props.id, widget)
 
             -- Create the UI table
-            local ui = make_ui(props, old_props_tree, props_tree)
+            local ui = make_ui(tree, props)
 
             -- Call the function with a new UI table
             if fn then
@@ -561,19 +563,19 @@ local function make_ui(parent_props, old_props_tree, props_tree)
             end
 
             -- Compose the widget
-            widget.compose(props, old_props, ui)
+            widget.compose(props, ui)
 
             -- Accept the widget in the parent
-            local err = parent_widget.accept_child(props_tree, parent_props.id, props)
+            local err = parent_widget.accept_child(tree.props, parent_props.id, props)
             if err then
                 error(err, 2)
             end
 
             -- Check dirtiness
-            set_dirtiness(props, old_props_tree[props.id])
+            set_dirtiness(tree, props)
 
             -- Add the widget to the tree
-            props_tree[props.id] = props
+            tree.props[props.id] = props
 
             -- Add to the parent's children list
             table.insert(parent_props.children, props.id)
@@ -585,7 +587,7 @@ local function make_ui(parent_props, old_props_tree, props_tree)
         if cuicui.COMMON_PROPS[key] then
             expect(1, value, table.unpack(cuicui.COMMON_PROPS[key]))
 
-            if key == "id" and props_tree[key] then
+            if key == "id" and tree.props[key] then
                 error("ID already exists: " .. key, 2)
             end
 
@@ -620,37 +622,42 @@ local function index_cuicui(_, key)
             end
         end
 
-        -- Trees
-        local props_tree = {}
-        local old_props_tree = {}
-        local render_tree = {}
+        -- Tree
+        local tree = {
+            props = {},
+            old_props = {},
+            render = {},
+            old_render = {},
+            dirty = {},
+            buffer = {}
+        }
 
         -- Fetch the widget from the widgets table
         local root_widget = widgets[key]
 
-        local root_props = make_props(key, 0, root_widget, old_props_tree)
-
-        -- Add the widget to the tree
-        props_tree[root_props.id] = root_props
-
         -- Run the UI loop
         while true do
-            -- Turn on visibility of root widget
-            root_props.visible = true
+            -- Make props for the root widget
+            local root_props = make_props(tree, key, 0, root_widget)
+
+            -- Make UI for the root widget
+            local root_ui = make_ui(tree, root_props)
 
             -- Compute the tree
-            fn(make_ui(root_props, old_props_tree, props_tree))
+            fn(root_ui)
 
             -- Compose the widget
-            root_widget.compose(props, old_props, ui)
+            root_widget.compose(root_props, root_ui)
 
             -- Check dirtiness of the root widget
-            local old_root_props = old_props_tree[root_props.id]
-            set_dirtiness(root_props, old_root_props)
+            set_dirtiness(tree, root_props)
+
+            -- Add the widget to the tree
+            tree.props[root_props.id] = root_props
 
             -- Render the UI
-            render.update_layout(props_tree, old_props_tree, term, root_props, old_root_props, widgets)
-            render.draw(props_tree, render_tree, term, root_props, widgets, cuicui.DEBUG)
+            render.update_layout(tree, root_props, widgets, term)
+            render.draw(tree, root_props, widgets, term, cuicui.DEBUG)
 
             -- Set the cursor position to the top-left corner of the terminal
             -- For debugging purposes
@@ -661,16 +668,18 @@ local function index_cuicui(_, key)
             end
 
             -- Wait and process events until the UI needs to be updated
-            if not event.process(props_tree, render_tree, widgets, root_props, monitor_name) then
+            if not event.process(tree, widgets, root_props, monitor_name) then
                 term.setCursorPos(1, 1)
                 term.clear()
                 return
             end
 
             -- Clear the tree
-            old_props_tree = props_tree
-            props_tree = { [root_props.id] = root_props }
-            root_props.children = {}
+            tree.old_props = tree.props
+            tree.old_render = tree.render
+            tree.props = {}
+            tree.render = {}
+            tree.dirty = {}
         end
     end
 end

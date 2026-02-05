@@ -60,21 +60,11 @@ function widget.compute_children_layout(props_tree, id)
 end
 
 local function draw_left(term, circle_color, dot_color, background_color)
-    term.setBackgroundColor(circle_color)
-    term.setTextColor(dot_color)
-    term.write("\136")
-    term.setBackgroundColor(background_color)
-    term.setTextColor(circle_color)
-    term.write("\149")
+    term.blit("\136\149", colors.toBlit(dot_color) .. colors.toBlit(circle_color), colors.toBlit(circle_color) .. colors.toBlit(background_color))
 end
 
 local function draw_right(term, circle_color, dot_color, background_color)
-    term.setBackgroundColor(circle_color)
-    term.setTextColor(background_color)
-    term.write("\149")
-    term.setBackgroundColor(circle_color)
-    term.setTextColor(dot_color)
-    term.write("\132")
+    term.blit("\149\132", colors.toBlit(background_color) .. colors.toBlit(dot_color), colors.toBlit(circle_color) .. colors.toBlit(circle_color))
 end
 
 function widget.draw(props_tree, id, term)

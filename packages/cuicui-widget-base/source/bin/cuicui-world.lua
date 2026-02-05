@@ -18,24 +18,21 @@
 
 --! preserve-lines
 
-local cuicui  = require("cuicui")
-local const   = require("cuicui.const")
+local cuicui = require("cuicui")
+local const  = require("cuicui.const")
 
 -- Set the debug mode
-cuicui.DEBUG  = false
+cuicui.DEBUG = false
 
-local counter = 1
+local mode   = 2
 
 cuicui.vertical(term.current(), function(ui)
     ui.color = colors.lightGray
     ui.align = const.ALIGN.CENTER + const.ALIGN.HORIZON
     ui.h_expand = true
+    ui.v_expand = true
 
-    if ui.click then
-        --counter = counter + 1
-    end
-
-    if counter < 10 then
+    if mode == 1 then
         ui.label(function(ui2)
             ui2.text = "*click*"
             ui2.visible = ui.click ~= nil
@@ -58,7 +55,7 @@ cuicui.vertical(term.current(), function(ui)
                 end
             end)
         end
-    elseif counter >= 10 and counter < 20 then
+    elseif mode == 2 then
         ui.toggle(function(ui)
             ui.align_right = false
         end)
