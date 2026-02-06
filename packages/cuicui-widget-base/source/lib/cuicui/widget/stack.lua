@@ -63,7 +63,7 @@ widget.PROPS  = {
     align = { "number" },
 }
 
-function widget.populate_default_props(props, old_props)
+function widget.populate_default_props(props, old_props, event)
     props.align = const.ALIGN.LEFT + const.ALIGN.TOP
 end
 
@@ -74,73 +74,76 @@ end
 function widget.compose(props, ui)
 end
 
-function widget.compute_natural_size(props_tree, id)
-    local data = props_tree[id]
+function widget.compute_natural_size(props_tree, render_tree, id)
+    local props = props_tree[id]
+    local layout = render_tree[id]
 
     -- Set default width and height
-    data.natural_width = 0
-    data.natural_height = 0
+    layout.natural_width = 0
+    layout.natural_height = 0
 
     -- Iterate over children to compute the size (take the maximum of all children)
-    for _, child_id in ipairs(data.children) do
-        local child_data = props_tree[child_id]
+    for _, child_id in ipairs(props.children) do
+        local child_layout = render_tree[child_id]
 
         -- Update width and height to the maximum
-        data.natural_width = math.max(data.natural_width, child_data.natural_width)
-        data.natural_height = math.max(data.natural_height, child_data.natural_height)
+        layout.natural_width = math.max(layout.natural_width, child_layout.natural_width)
+        layout.natural_height = math.max(layout.natural_height, child_layout.natural_height)
     end
 end
 
-function widget.compute_children_layout(props_tree, id)
-    local data = props_tree[id]
+function widget.compute_children_layout(props_tree, render_tree, id)
+    local props = props_tree[id]
+    local layout = render_tree[id]
 
     -- All children are positioned at the same location, stacked on top of each other
-    for _, child_id in ipairs(data.children) do
-        local child_data = props_tree[child_id]
+    for _, child_id in ipairs(props.children) do
+        local child_props = props_tree[child_id]
+        local child_layout = render_tree[child_id]
 
         -- Compute child size based on expand flags
-        if child_data.h_expand then
-            child_data.width = data.width
+        if child_props.h_expand then
+            child_layout.width = layout.width
         else
-            child_data.width = child_data.natural_width
+            child_layout.width = child_layout.natural_width
         end
 
-        if child_data.v_expand then
-            child_data.height = data.height
+        if child_props.v_expand then
+            child_layout.height = layout.height
         else
-            child_data.height = child_data.natural_height
+            child_layout.height = child_layout.natural_height
         end
 
         -- Horizontal alignment
-        if flagger.test(data.align, const.ALIGN.CENTER) then
-            child_data.x = 1 + math.floor((data.width - child_data.width) / 2)
-        elseif flagger.test(data.align, const.ALIGN.RIGHT) then
-            child_data.x = 1 + data.width - child_data.width
+        if flagger.test(props.align, const.ALIGN.CENTER) then
+            child_layout.x = 1 + math.floor((layout.width - child_layout.width) / 2)
+        elseif flagger.test(props.align, const.ALIGN.RIGHT) then
+            child_layout.x = 1 + layout.width - child_layout.width
         else
-            child_data.x = 1
+            child_layout.x = 1
         end
 
         -- Vertical alignment
-        if flagger.test(data.align, const.ALIGN.HORIZON) then
-            child_data.y = 1 + math.floor((data.height - child_data.height) / 2)
-        elseif flagger.test(data.align, const.ALIGN.BOTTOM) then
-            child_data.y = 1 + data.height - child_data.height
+        if flagger.test(props.align, const.ALIGN.HORIZON) then
+            child_layout.y = 1 + math.floor((layout.height - child_layout.height) / 2)
+        elseif flagger.test(props.align, const.ALIGN.BOTTOM) then
+            child_layout.y = 1 + layout.height - child_layout.height
         else
-            child_data.y = 1
+            child_layout.y = 1
         end
     end
 end
 
-function widget.draw(props_tree, id, term)
-    local data = props_tree[id]
+function widget.draw(props_tree, render_tree, id, term)
+    local props = props_tree[id]
 
-    if data.color then
-        term.setBackgroundColor(data.color)
+    if props.color then
+        term.setBackgroundColor(props.color)
         term.clear()
     end
 end
 
-function widget.handle_event(props_tree, id, sch, event)
+function widget.handle_event(props_tree, event_tree, id, sch, event)
 end
 
 return widget

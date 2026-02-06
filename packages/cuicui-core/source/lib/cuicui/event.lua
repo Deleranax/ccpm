@@ -41,39 +41,40 @@ local function fire_lost_focus_recursive(tree, widgets, id, x, y)
     local props = tree.props[id]
 
     for _, child_id in ipairs(props.children) do
-        local child_props = tree.props[child_id]
+        local child_layout = tree.render[child_id]
 
-        if child_props.x > x or x >= child_props.x + child_props.width or
-            child_props.y > y or y >= child_props.y + child_props.height then
+        if child_layout.x > x or x >= child_layout.x + child_layout.width or
+            child_layout.y > y or y >= child_layout.y + child_layout.height then
             fire_lost_focus_recursive(
                 tree,
                 widgets,
                 child_id,
-                x - child_props.x,
-                y - child_props.y
+                x - child_layout.x,
+                y - child_layout.y
             )
         end
     end
 
-    widgets[props.type].handle_event(tree.props, id, make_sch(tree, id), { "lost_focus" })
+    widgets[props.type].handle_event(tree.props, tree.event, id, make_sch(tree, id), { "lost_focus" })
 end
 
 --- Fire mouse click event recursively
 local function fire_mouse_click_recursive(tree, widgets, id, x, y, click)
     local props = tree.props[id]
+    local event_data = tree.event[id]
     local consumed = false
 
     for _, child_id in ipairs(props.children) do
-        local child_props = tree.props[child_id]
-        if child_props.x <= x and x < child_props.x + child_props.width and
-            child_props.y <= y and y < child_props.y + child_props.height and
+        local child_layout = tree.render[child_id]
+        if child_layout.x <= x and x < child_layout.x + child_layout.width and
+            child_layout.y <= y and y < child_layout.y + child_layout.height and
             not consumed then
             if fire_mouse_click_recursive(
                     tree,
                     widgets,
                     child_id,
-                    x - child_props.x,
-                    y - child_props.y,
+                    x - child_layout.x,
+                    y - child_layout.y,
                     click
                 ) then
                 consumed = true
@@ -83,28 +84,29 @@ local function fire_mouse_click_recursive(tree, widgets, id, x, y, click)
                 tree,
                 widgets,
                 child_id,
-                x - child_props.x,
-                y - child_props.y
+                x - child_layout.x,
+                y - child_layout.y
             )
         end
     end
 
     if consumed then
         -- If consumed but clicked
-        if props.click then
+        if event_data.click then
             local evnt = {
                 "mouse_up",
-                props.click,
-                props.cursor[1],
-                props.cursor[2]
+                event_data.click,
+                event_data.cursor[1],
+                event_data.cursor[2]
             }
 
-            props.click = nil
-            props.cursor = nil
+            event_data.click = nil
+            event_data.cursor = nil
 
-            widgets[props.type].handle_event(tree.props, id, make_sch(tree, id), evnt)
+            widgets[props.type].handle_event(tree.props, tree.event, id, make_sch(tree, id), evnt)
         else
-            widgets[props.type].handle_event(tree.props, id, make_sch(tree, id), { "lost_focus" })
+            tree.event[id] = {}
+            widgets[props.type].handle_event(tree.props, tree.event, id, make_sch(tree, id), { "lost_focus" })
         end
         return true
     else
@@ -114,52 +116,55 @@ local function fire_mouse_click_recursive(tree, widgets, id, x, y, click)
             x, y
         }
 
-        props.click = click
-        props.cursor = { x, y }
+        event_data.click = click
+        event_data.cursor = { x, y }
+        tree.event[id] = event_data
 
-        return widgets[props.type].handle_event(tree.props, id, make_sch(tree, id), evnt)
+        return widgets[props.type].handle_event(tree.props, tree.event, id, make_sch(tree, id), evnt)
     end
 end
 
 --- Fire mouse up event recursively.
 local function fire_mouse_up_recursive(tree, widgets, id)
     local props = tree.props[id]
+    local event_data = tree.event[id]
 
     for _, child_id in ipairs(props.children) do
         fire_mouse_up_recursive(tree, widgets, child_id)
     end
 
-    if props.click then
+    if event_data.click then
         local evnt = {
             "mouse_up",
-            props.click,
-            props.cursor[1],
-            props.cursor[2]
+            event_data.click,
+            event_data.cursor[1],
+            event_data.cursor[2]
         }
 
-        props.click = nil
-        props.cursor = nil
+        event_data.click = nil
+        event_data.cursor = nil
 
-        widgets[props.type].handle_event(tree.props, id, make_sch(tree, id), evnt)
+        widgets[props.type].handle_event(tree.props, tree.event, id, make_sch(tree, id), evnt)
     end
 end
 
 --- Fire mouse drag event recursively
 local function fire_mouse_drag_recursive(tree, widgets, id, x, y, click)
     local props = tree.props[id]
+    local event_data = tree.event[id]
     local consumed = false
 
     for _, child_id in ipairs(props.children) do
-        local child_props = tree.props[child_id]
-        if child_props.x <= x and x < child_props.x + child_props.width and
-            child_props.y <= y and y < child_props.y + child_props.height and
+        local child_layout = tree.render[child_id]
+        if child_layout.x <= x and x < child_layout.x + child_layout.width and
+            child_layout.y <= y and y < child_layout.y + child_layout.height and
             not consumed then
             if fire_mouse_drag_recursive(
                     tree,
                     widgets,
                     child_id,
-                    x - child_props.x,
-                    y - child_props.y,
+                    x - child_layout.x,
+                    y - child_layout.y,
                     click
                 ) then
                 consumed = true
@@ -175,25 +180,25 @@ local function fire_mouse_drag_recursive(tree, widgets, id, x, y, click)
 
     if consumed then
         -- If consumed but clicked
-        if props.click then
+        if event_data.click then
             local evnt = {
                 "mouse_up",
-                props.click,
-                props.cursor[1],
-                props.cursor[2]
+                event_data.click,
+                event_data.cursor[1],
+                event_data.cursor[2]
             }
 
-            props.click = nil
-            props.cursor = nil
+            event_data.click = nil
+            event_data.cursor = nil
 
-            widgets[props.type].handle_event(tree.props, id, make_sch(tree, id), evnt)
+            widgets[props.type].handle_event(tree.props, tree.event, id, make_sch(tree, id), evnt)
         end
         return true
     else
         local evnt = {}
 
         -- Change if the widget is clicked
-        if props.click then
+        if event_data.click then
             evnt = {
                 "mouse_drag",
                 click,
@@ -207,15 +212,16 @@ local function fire_mouse_drag_recursive(tree, widgets, id, x, y, click)
             }
         end
 
-        props.click = click
-        props.cursor = { x, y }
+        event_data.click = click
+        event_data.cursor = { x, y }
 
-        return widgets[props.type].handle_event(tree.props, id, make_sch(tree, id), evnt)
+        return widgets[props.type].handle_event(tree.props, tree.event, id, make_sch(tree, id), evnt)
     end
 end
 
 local function fire_key_recursive(tree, widgets, id, key, held)
     local props = tree.props[id]
+    local event_data = tree.event[id]
     local consumed = false
 
     for _, child_id in ipairs(props.children) do
@@ -233,15 +239,15 @@ local function fire_key_recursive(tree, widgets, id, key, held)
 
     if consumed then
         -- If consumed but pressed
-        if props.keys and props.keys[key] then
+        if event_data.keys and event_data.keys[key] then
             local evnt = {
                 "key_up",
                 key
             }
 
-            props.keys[key] = nil
+            event_data.keys[key] = nil
 
-            widgets[props.type].handle_event(tree.props, id, make_sch(tree, id), evnt)
+            widgets[props.type].handle_event(tree.props, tree.event, id, make_sch(tree, id), evnt)
         end
         return true
     else
@@ -251,29 +257,30 @@ local function fire_key_recursive(tree, widgets, id, key, held)
             held
         }
 
-        props.keys = props.keys or {}
-        props.keys[key] = true
+        event_data.keys = event_data.keys or {}
+        event_data.keys[key] = true
 
-        return widgets[props.type].handle_event(tree.props, id, make_sch(tree, id), evnt)
+        return widgets[props.type].handle_event(tree.props, tree.event, id, make_sch(tree, id), evnt)
     end
 end
 
 local function fire_key_up_recursive(tree, widgets, id, key)
     local props = tree.props[id]
+    local event_data = tree.event[id]
 
     for _, child_id in ipairs(props.children) do
         fire_key_up_recursive(tree, widgets, child_id, key)
     end
 
-    if props.keys and props.keys[key] then
+    if event_data.keys and event_data.keys[key] then
         local evnt = {
             "key_up",
             key
         }
 
-        props.keys[key] = nil
+        event_data.keys[key] = nil
 
-        widgets[props.type].handle_event(tree.props, id, make_sch(tree, id), evnt)
+        widgets[props.type].handle_event(tree.props, tree.event, id, make_sch(tree, id), evnt)
     end
 end
 

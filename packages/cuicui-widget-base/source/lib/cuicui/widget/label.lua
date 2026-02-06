@@ -44,7 +44,7 @@ widget.PROPS = {
     background_color = { "number", "nil" }
 }
 
-function widget.populate_default_props(props, old_props)
+function widget.populate_default_props(props, old_props, event)
     props.text = "Label #" .. props.id
     props.color = colors.white
 end
@@ -56,31 +56,32 @@ end
 function widget.compose(props, ui)
 end
 
-function widget.compute_natural_size(props_tree, id)
-    local data = props_tree[id]
+function widget.compute_natural_size(props_tree, render_tree, id)
+    local props = props_tree[id]
+    local layout = render_tree[id]
 
-    data.natural_width = #data.text
-    data.natural_height = 1
+    layout.natural_width = #props.text
+    layout.natural_height = 1
 end
 
-function widget.compute_children_layout(props_tree, id)
+function widget.compute_children_layout(props_tree, render_tree, id)
     -- Only used for containers
 end
 
-function widget.draw(props_tree, id, term)
-    local data = props_tree[id]
+function widget.draw(props_tree, render_tree, id, term)
+    local props = props_tree[id]
 
-    if data.background_color then
-        term.setBackgroundColor(data.background_color)
+    if props.background_color then
+        term.setBackgroundColor(props.background_color)
         term.clear()
     end
 
     term.setCursorPos(1, 1)
-    term.setTextColor(data.color)
-    term.write(data.text)
+    term.setTextColor(props.color)
+    term.write(props.text)
 end
 
-function widget.handle_event(props_tree, id, sch, event)
+function widget.handle_event(props_tree, event_tree, id, sch, event)
 end
 
 return widget

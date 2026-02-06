@@ -60,7 +60,7 @@ widget.PROPS  = {
     color = { "number", "nil" }
 }
 
-function widget.populate_default_props(props, old_props)
+function widget.populate_default_props(props, old_props, event)
     props.padding = 0
     props.align = const.ALIGN.LEFT + const.ALIGN.TOP
 end
@@ -78,79 +78,84 @@ function widget.compose(props, old_props, ui)
     props.padding = utils.compute_rect_vars(props.padding)
 end
 
-function widget.compute_natural_size(props_tree, id)
-    local data = props_tree[id]
+function widget.compute_natural_size(props_tree, render_tree, id)
+    local props = props_tree[id]
+    local layout = render_tree[id]
 
     local child_width = 0
     local child_height = 0
 
     -- If the child exists, get its natural size
-    if #data.children > 0 then
-        local child_data = props_tree[data.children[1]]
+    if #props.children > 0 then
+        local child_layout = render_tree[props.children[1]]
 
-        child_width = child_data.natural_width
-        child_height = child_data.natural_height
+        child_width = child_layout.natural_width
+        child_height = child_layout.natural_height
     end
 
     -- Compute the box's natural width
-    if data.fixed_width then
-        data.natural_width = data.fixed_width
+    if props.fixed_width then
+        layout.natural_width = props.fixed_width
     else
-        data.natural_width = data.padding.left + child_width + data.padding.right
+        layout.natural_width = props.padding.left + child_width + props.padding.right
     end
 
     -- Compute the box's natural height
-    if data.fixed_height then
-        data.natural_height = data.fixed_height
+    if props.fixed_height then
+        layout.natural_height = props.fixed_height
     else
-        data.natural_height = data.padding.top + child_height + data.padding.bottom
+        layout.natural_height = props.padding.top + child_height + props.padding.bottom
     end
 end
 
-function widget.compute_children_layout(props_tree, id)
-    local data = props_tree[id]
+function widget.compute_children_layout(props_tree, render_tree, id)
+    local props = props_tree[id]
+    local layout = render_tree[id]
 
-    if #data.children > 0 then
-        local child_data = props_tree[data.children[1]]
+    if #props.children > 0 then
+        local child_props = props_tree[props.children[1]]
+        local child_layout = render_tree[props.children[1]]
 
         -- Compute the child's size
-        child_data.width = math.min(child_data.natural_width, data.width - data.padding.left - data.padding.right)
-        child_data.height = math.min(child_data.natural_height, data.height - data.padding.top - data.padding.bottom)
+        child_layout.width = math.min(child_layout.natural_width, layout.width - props.padding.left - props.padding
+            .right)
+        child_layout.height = math.min(child_layout.natural_height,
+            layout.height - props.padding.top - props.padding.bottom)
 
         -- Compute the child's position with alignment
-        local available_width = data.width - data.padding.left - data.padding.right
-        local available_height = data.height - data.padding.top - data.padding.bottom
+        local available_width = layout.width - props.padding.left - props.padding.right
+        local available_height = layout.height - props.padding.top - props.padding.bottom
 
         -- Horizontal alignment
-        if flagger.test(data.align, const.ALIGN.CENTER) then
-            child_data.x = data.padding.left + math.floor((available_width - child_data.width) / 2)
-        elseif flagger.test(data.align, const.ALIGN.RIGHT) then
-            child_data.x = data.padding.left + available_width - child_data.width
+        if flagger.test(props.align, const.ALIGN.CENTER) then
+            child_layout.x = props.padding.left + math.floor((available_width - child_layout.width) / 2)
+        elseif flagger.test(props.align, const.ALIGN.RIGHT) then
+            child_layout.x = props.padding.left + available_width - child_layout.width
         else
-            child_data.x = data.padding.left
+            child_layout.x = props.padding.left
         end
 
         -- Vertical alignment
-        if flagger.test(data.align, const.ALIGN.HORIZON) then
-            child_data.y = data.padding.top + math.floor((available_height - child_data.height) / 2)
-        elseif flagger.test(data.align, const.ALIGN.BOTTOM) then
-            child_data.y = data.padding.top + available_height - child_data.height
+        if flagger.test(props.align, const.ALIGN.HORIZON) then
+            child_layout.y = props.padding.top + math.floor((available_height - child_layout.height) / 2)
+        elseif flagger.test(props.align, const.ALIGN.BOTTOM) then
+            child_layout.y = props.padding.top + available_height - child_layout.height
         else
-            child_data.y = data.padding.top
+            child_layout.y = props.padding.top
         end
     end
 end
 
-function widget.draw(props_tree, id, term)
-    local data = props_tree[id]
+function widget.draw(props_tree, render_tree, id, term)
+    local props = props_tree[id]
 
-    if data.color then
-        term.setBackgroundColor(data.color)
+    if props.color then
+        term.setBackgroundColor(props.color)
         term.clear()
     end
 end
 
-function widget.handle_event(props_tree, id, sch, event)
+function widget.handle_event(props_tree, event_tree, id, sch, event)
 end
 
 return widget

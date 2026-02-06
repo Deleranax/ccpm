@@ -61,7 +61,7 @@ widget.PROPS  = {
     align = { "number" },
 }
 
-function widget.populate_default_props(props, old_props)
+function widget.populate_default_props(props, old_props, event)
     props.spacing = 0
     props.fill = false
     props.align = const.ALIGN.LEFT + const.ALIGN.TOP
@@ -74,105 +74,108 @@ end
 function widget.compose(props, ui)
 end
 
-function widget.compute_natural_size(props_tree, id)
-    local data = props_tree[id]
+function widget.compute_natural_size(props_tree, render_tree, id)
+    local props = props_tree[id]
+    local layout = render_tree[id]
     local first = true
 
     -- Set default width and height
-    data.natural_width = 0
-    data.natural_height = 0
+    layout.natural_width = 0
+    layout.natural_height = 0
 
     -- Iterate over children to compute the size
-    for _, child_id in ipairs(data.children) do
-        -- Get child data
-        local child_data = props_tree[child_id]
+    for _, child_id in ipairs(props.children) do
+        -- Get child layout
+        local child_layout = render_tree[child_id]
 
         -- Update height
-        data.natural_height = math.max(data.natural_height, child_data.natural_height)
+        layout.natural_height = math.max(layout.natural_height, child_layout.natural_height)
 
         -- Update width (if first, don't add spacing)
         if first then
-            data.natural_width = child_data.natural_width
+            layout.natural_width = child_layout.natural_width
             first = false
         else
-            data.natural_width = data.natural_width + child_data.natural_width + data.spacing
+            layout.natural_width = layout.natural_width + child_layout.natural_width + props.spacing
         end
     end
 end
 
-function widget.compute_children_layout(props_tree, id)
-    local data = props_tree[id]
+function widget.compute_children_layout(props_tree, render_tree, id)
+    local props = props_tree[id]
+    local layout = render_tree[id]
     local expand_number = 0
 
     -- Iterate over children to compute the expand number
-    for _, child_id in ipairs(data.children) do
-        local child_data = props_tree[child_id]
+    for _, child_id in ipairs(props.children) do
+        local child_props = props_tree[child_id]
 
-        if child_data.h_expand then
+        if child_props.h_expand then
             expand_number = expand_number + 1
         end
     end
 
-    local remaining_width = data.width - data.natural_width
+    local remaining_width = layout.width - layout.natural_width
     local expand_width = math.floor(remaining_width / expand_number) -- Size of each expandable child
     local first = true
     local offset = 1
 
     -- If there are no expandable children, align the children horizontally
     if expand_number == 0 then
-        if flagger.test(data.align, const.ALIGN.CENTER) then
+        if flagger.test(props.align, const.ALIGN.CENTER) then
             offset = math.floor(remaining_width / 2)
-        elseif flagger.test(data.align, const.ALIGN.RIGHT) then
+        elseif flagger.test(props.align, const.ALIGN.RIGHT) then
             offset = remaining_width
         end
     end
 
     -- Iterate over children to compute the layout
-    for _, child_id in ipairs(data.children) do
-        local child_data = props_tree[child_id]
+    for _, child_id in ipairs(props.children) do
+        local child_props = props_tree[child_id]
+        local child_layout = render_tree[child_id]
 
-        if child_data.v_expand then
-            child_data.height = data.height
+        if child_props.v_expand then
+            child_layout.height = layout.height
         else
-            child_data.height = child_data.natural_height
+            child_layout.height = child_layout.natural_height
         end
 
-        if child_data.h_expand then
-            child_data.width = child_data.natural_width + expand_width
+        if child_props.h_expand then
+            child_layout.width = child_layout.natural_width + expand_width
         else
-            child_data.width = child_data.natural_width
+            child_layout.width = child_layout.natural_width
         end
 
         -- Set default y position
-        child_data.y = 1
+        child_layout.y = 1
 
-        if flagger.test(data.align, const.ALIGN.HORIZON) then
-            child_data.y = 1 + math.floor((data.height - child_data.height) / 2)
-        elseif flagger.test(data.align, const.ALIGN.BOTTOM) then
-            child_data.y = 1 + data.height - child_data.height
+        if flagger.test(props.align, const.ALIGN.HORIZON) then
+            child_layout.y = 1 + math.floor((layout.height - child_layout.height) / 2)
+        elseif flagger.test(props.align, const.ALIGN.BOTTOM) then
+            child_layout.y = 1 + layout.height - child_layout.height
         end
 
         if first then
-            child_data.x = offset
+            child_layout.x = offset
             first = false
         else
-            child_data.x = offset + data.spacing
+            child_layout.x = offset + props.spacing
         end
 
-        offset = child_data.x + child_data.width
+        offset = child_layout.x + child_layout.width
     end
 end
 
-function widget.draw(props_tree, id, term)
-    local data = props_tree[id]
+function widget.draw(props_tree, render_tree, id, term)
+    local props = props_tree[id]
 
-    if data.color then
-        term.setBackgroundColor(data.color)
+    if props.color then
+        term.setBackgroundColor(props.color)
         term.clear()
     end
 end
 
-function widget.handle_event(props_tree, id, sch, event)
+function widget.handle_event(props_tree, event_tree, id, sch, event)
 end
 
 return widget

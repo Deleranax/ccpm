@@ -29,7 +29,7 @@ widget.PROPS = {
     align_right = { "boolean" }
 }
 
-function widget.populate_default_props(props, old_props)
+function widget.populate_default_props(props, old_props, event)
     props.active = false
     props.deactivated_color = colors.gray
     props.activated_color = colors.lightBlue
@@ -38,6 +38,11 @@ function widget.populate_default_props(props, old_props)
 
     if old_props then
         props.active = old_props.active
+    end
+
+    -- Apply event-driven state changes
+    if event and event.active ~= nil then
+        props.active = event.active
     end
 end
 
@@ -48,50 +53,53 @@ end
 function widget.compose(props, ui)
 end
 
-function widget.compute_natural_size(props_tree, id)
-    local data = props_tree[id]
+function widget.compute_natural_size(props_tree, render_tree, id)
+    local layout = render_tree[id]
 
-    data.natural_width = 2
-    data.natural_height = 1
+    layout.natural_width = 2
+    layout.natural_height = 1
 end
 
-function widget.compute_children_layout(props_tree, id)
+function widget.compute_children_layout(props_tree, render_tree, id)
     -- Only used for containers
 end
 
 local function draw_left(term, circle_color, dot_color, background_color)
-    term.blit("\136\149", colors.toBlit(dot_color) .. colors.toBlit(circle_color), colors.toBlit(circle_color) .. colors.toBlit(background_color))
+    term.blit("\136\149", colors.toBlit(dot_color) .. colors.toBlit(circle_color),
+        colors.toBlit(circle_color) .. colors.toBlit(background_color))
 end
 
 local function draw_right(term, circle_color, dot_color, background_color)
-    term.blit("\149\132", colors.toBlit(background_color) .. colors.toBlit(dot_color), colors.toBlit(circle_color) .. colors.toBlit(circle_color))
+    term.blit("\149\132", colors.toBlit(background_color) .. colors.toBlit(dot_color),
+        colors.toBlit(circle_color) .. colors.toBlit(circle_color))
 end
 
-function widget.draw(props_tree, id, term)
-    local data = props_tree[id]
+function widget.draw(props_tree, render_tree, id, term)
+    local props = props_tree[id]
 
     -- Compute the color based on the activation state
     term.setCursorPos(1, 1)
-    if data.active then
-        if data.align_right then
-            draw_right(term, data.activated_color, data.deactivated_color, data.background_color)
+    if props.active then
+        if props.align_right then
+            draw_right(term, props.activated_color, props.deactivated_color, props.background_color)
         else
-            draw_left(term, data.activated_color, data.deactivated_color, data.background_color)
+            draw_left(term, props.activated_color, props.deactivated_color, props.background_color)
         end
     else
-        if data.align_right then
-            draw_right(term, data.deactivated_color, data.background_color, data.background_color)
+        if props.align_right then
+            draw_right(term, props.deactivated_color, props.background_color, props.background_color)
         else
-            draw_left(term, data.deactivated_color, data.background_color, data.background_color)
+            draw_left(term, props.deactivated_color, props.background_color, props.background_color)
         end
     end
 end
 
-function widget.handle_event(props_tree, id, sch, event)
+function widget.handle_event(props_tree, event_tree, id, sch, event)
     if event[1] == "mouse_click" then
-        local data = props_tree[id]
+        local props = props_tree[id]
 
-        data.active = not data.active
+        event_tree[id].active = not props.active
+        return true
     end
 end
 
