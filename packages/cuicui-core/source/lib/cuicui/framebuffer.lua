@@ -31,6 +31,10 @@ function fb.new(width, height, init_bg)
     expect(2, height, "number")
     expect(3, init_bg, "number", "nil")
 
+    if width < 1 or height < 1 then
+        error("Invalid dimensions: width and height must be positive integers", 2)
+    end
+
     -- Private
     local text_buffer = {}
     local text_color_buffer = {}
@@ -42,6 +46,10 @@ function fb.new(width, height, init_bg)
 
     --- Blit to the framebuffer
     local function blit(text, text_color, background_color)
+        if x > width or y > height or x < 1 or y < 1 then
+            return
+        end
+
         if #text ~= #text_color or #text ~= #background_color then
             error("Invalid input: length mismatch", 2)
         end
@@ -58,6 +66,10 @@ function fb.new(width, height, init_bg)
     end
 
     local function clear_line(y)
+        if y > height or y < 1 then
+            return
+        end
+
         if not text_buffer[y] then
             text_buffer[y] = {}
             text_color_buffer[y] = {}
@@ -100,9 +112,17 @@ function fb.new(width, height, init_bg)
     function framebuffer.blit_onto(term, term_x, term_y, fb_x, fb_y, fb_width, fb_height)
         local term_width, term_height = term.getSize()
 
+        -- Clip
+        if fb_y < 1 then
+            fb_height = fb_height + fb_y - 1
+            fb_y = 1
+        end
+        if fb_x < 1 then
+            fb_width = fb_width + fb_x - 1
+            fb_x = 1
+        end
+
         -- Rectify input
-        fb_x = math.max(1, math.min(width, fb_x))
-        fb_y = math.max(1, math.min(height, fb_y))
         fb_width = math.min(width - fb_x + 1, fb_width)
         fb_height = math.min(height - fb_y + 1, fb_height)
 
@@ -130,9 +150,9 @@ function fb.new(width, height, init_bg)
         end
 
         for i = 0, fb_height - 1 do
-            term.setCursorPos(term_x, term_y + i)
             local start = fb_x
             local stop = fb_x + fb_width - 1
+            term.setCursorPos(term_x, term_y + i)
             term.blit(
                 table.concat(text_buffer[fb_y + i], "", start, stop),
                 table.concat(text_color_buffer[fb_y + i], "", start, stop),
@@ -182,8 +202,8 @@ function fb.new(width, height, init_bg)
     end
 
     function framebuffer.setCursorPos(new_x, new_y)
-        x = math.max(1, math.min(new_x, width))
-        y = math.max(1, math.min(new_y, height))
+        x = new_x
+        y = new_y
     end
 
     function framebuffer.getCursorBlink()

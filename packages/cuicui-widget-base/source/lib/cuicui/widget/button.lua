@@ -16,42 +16,39 @@
     along with this program.  If not, see <https://www.gnu.org/licenses>.
 --]]
 
---- Label widget - displays a single line of text.
----
---- A simple text display widget that shows a string with configurable colors.
---- Labels cannot contain child widgets.
----
---- **Properties:**
---- - `text` (string): The text content to display
---- - `color` (number): Text color (use ComputerCraft color constants)
---- - `background_color` (number, optional): Background color for the label area
----
---- **Example:**
---- ```lua
---- ui.label(function(ui)
----     ui.text = "Hello, world!"
----     ui.color = colors.white
----     ui.background_color = colors.blue
---- end)
---- ```
+local label = require("cuicui.widget.label")
+
+-- DOC HERE
 
 --- @export
 local widget = {}
 
 widget.PROPS = {
+    active = { "boolean" },
     text = { "string" },
     color = { "number" },
-    background_color = { "number" }
+    background_color = { "number" },
+    activated_color = { "number", "nil" },
+    activated_background_color = { "number", "nil" }
 }
 
 function widget.populate_default_props(props, old_props, event)
-    props.text = "Label #" .. props.id
+    props.active = false
+    props.text = "Button #" .. props.id
     props.color = colors.white
-    props.background_color = colors.black
+
+    if old_props then
+        props.active = old_props.active
+    end
+
+    if event and event.active ~= nil then
+        props.active = event.active
+        event.active = nil
+    end
 end
 
 function widget.accept_child(parent_props, child_props)
-    return "Labels cannot have children"
+    return "Buttons cannot have children"
 end
 
 function widget.compute_children_max_size(props_tree, render_tree, id)
@@ -87,15 +84,33 @@ end
 function widget.draw(props_tree, render_tree, id, term)
     local props = props_tree[id]
 
-    term.setBackgroundColor(props.background_color)
-    term.clear()
+    if props.active then
+        term.setBackgroundColor(props.activated_background_color or props.background_color)
+        term.clear()
 
-    term.setCursorPos(1, 1)
-    term.setTextColor(props.color)
-    term.write(props.text)
+        term.setCursorPos(1, 1)
+        term.setTextColor(props.activated_color or props.color)
+        term.write(props.text)
+    else
+        term.setBackgroundColor(props.background_color)
+        term.clear()
+
+        term.setCursorPos(1, 1)
+        term.setTextColor(props.color)
+        term.write(props.text)
+    end
 end
 
 function widget.handle_event(props_tree, render_tree, event_tree, id, sch, event)
+    if event[1] == "mouse_click" then
+        event_tree[id].active = true
+        return true
+    elseif event[1] == "mouse_up" then
+        event_tree[id].active = false
+        return true
+    elseif event[1] == "mouse_drag" then
+        return true
+    end
 end
 
 return widget

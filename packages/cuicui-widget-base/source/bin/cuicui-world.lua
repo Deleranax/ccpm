@@ -18,19 +18,31 @@
 
 --! preserve-lines
 
-local cuicui = require("cuicui")
-local const  = require("cuicui.const")
+local cuicui  = require("cuicui")
+local const   = require("cuicui.const")
 
 -- Set the debug mode
-cuicui.DEBUG = false
+cuicui.DEBUG  = 1
 
-local mode   = 2
+local mode    = 1
+local init    = true
+local counter = 0
 
 cuicui.vertical(term.current(), function(ui)
-    ui.color = colors.lightGray
+    ui.background_color = colors.lightGray
     ui.align = const.ALIGN.CENTER + const.ALIGN.HORIZON
     ui.h_expand = true
     ui.v_expand = true
+
+    if ui.keys then
+        if ui.keys[keys.left] and mode > 1 then
+            mode = mode - 1
+            init = true
+        elseif ui.keys[keys.right] and mode < 5 then
+            mode = mode + 1
+            init = true
+        end
+    end
 
     if mode == 1 then
         ui.label(function(ui2)
@@ -38,29 +50,68 @@ cuicui.vertical(term.current(), function(ui)
             ui2.visible = ui.click ~= nil
         end)
 
+        ui.progress(function(ui)
+            ui.current = counter
+            ui.vertical = false
+            ui.width = 10
+            ui.height = 3
+            ui.target = 20
+            ui.on_click(function(ui)
+                counter = counter + 1
+            end)
+        end, false)
+
         for i = 1, 10 do
-            ui.label(function(ui)
+            ui.button(function(ui)
                 ui.text = "Cuicui, world! (" .. i .. ")"
-                ui.id = "l" .. i -- Important for repeating creation
-                if i == 5 then
+                ui.activated_background_color = colors.red
+                ui.background_color = colors.blue
+                if ui.active then
                     ui.v_expand = true
                     ui.h_expand = true
-                    ui.background_color = colors.red
-                else
-                    ui.background_color = colors.blue
                 end
-
-                if ui.click ~= nil then
-                    ui.background_color = colors.green
-                end
-            end)
+            end, true, "l" .. i) -- Important for repeating creation
         end
     elseif mode == 2 then
         ui.toggle(function(ui)
+            if init then ui.active = true end
+            ui.group = "group1"
             ui.align_right = false
         end)
         ui.toggle(function(ui)
+            ui.group = "group1"
             ui.align_right = true
         end)
+    elseif mode == 3 then
+        ui.box(function(ui)
+            ui.padding = 3
+            ui.background_color = colors.red
+            ui.text(function(ui)
+                ui.text =
+                "Completement dingo ce truc vous trouvez pas? by the way, il fait beau aujourd'hui d'apres ma carte interractive ahah je marque n'importe quoi \n\n\n hello le monde"
+                ui.background_color = colors.blue
+            end)
+        end)
+    elseif mode == 4 then
+        ui.scroll(function(ui)
+            ui.vertical(function(ui)
+                ui.background_color = colors.red
+                for i = 1, 50 do
+                    ui.button(function(ui)
+                        ui.activated_background_color = colors.blue
+                        ui.text = "Cuicui, world! (" .. i .. ")"
+                    end, true, "l" .. i)
+                end
+            end)
+        end)
+    elseif mode == 5 then
+        ui.input(function(ui)
+            ui.placeholder = "Type something..."
+            ui.width = 20
+            ui.background_color = colors.blue
+            ui.placeholder_color = colors.lightBlue
+        end)
     end
+
+    init = false
 end)

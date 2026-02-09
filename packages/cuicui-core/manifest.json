@@ -4,5 +4,5 @@
   "authors": ["Alexandre Leconte <aleconte@dwightstudio.fr>"],
   "maintainers": ["Alexandre Leconte <aleconte@dwightstudio.fr>"],
   "version": "3.0.0",
-  "dependencies": ["flagger"]
+  "dependencies": ["flagger", "commons-table"]
 }

@@ -56,19 +56,30 @@ local widget  = {}
 
 widget.PROPS  = {
     spacing = { "number" },
-    color = { "number" },
-    fill = { "boolean" },
+    background_color = { "number" },
     align = { "number" },
 }
 
 function widget.populate_default_props(props, old_props, event)
     props.spacing = 0
-    props.fill = false
+    props.background_color = colors.black
     props.align = const.ALIGN.LEFT + const.ALIGN.TOP
 end
 
-function widget.accept_child(props_tree, id, child_props)
+function widget.accept_child(parent_props, child_props)
     return nil
+end
+
+function widget.compute_children_max_size(props_tree, render_tree, id)
+    local props = props_tree[id]
+    local layout = render_tree[id]
+
+    -- Pass through max size to all children
+    for _, child_id in ipairs(props.children) do
+        local child_layout = render_tree[child_id]
+        child_layout.max_width = layout.max_width
+        child_layout.max_height = layout.max_height
+    end
 end
 
 function widget.compose(props, ui)
@@ -80,8 +91,8 @@ function widget.compute_natural_size(props_tree, render_tree, id)
     local first = true
 
     -- Set default width and height
-    layout.natural_width = 0
-    layout.natural_height = 0
+    local natural_width = 0
+    local natural_height = 0
 
     -- Iterate over children to compute the size
     for _, child_id in ipairs(props.children) do
@@ -89,16 +100,27 @@ function widget.compute_natural_size(props_tree, render_tree, id)
         local child_layout = render_tree[child_id]
 
         -- Update width
-        layout.natural_width = math.max(layout.natural_width, child_layout.natural_width)
+        natural_width = math.max(natural_width, child_layout.natural_width)
 
         -- Update height (if first, don't add spacing)
         if first then
-            layout.natural_height = child_layout.natural_height
+            natural_height = child_layout.natural_height
             first = false
         else
-            layout.natural_height = layout.natural_height + child_layout.natural_height + props.spacing
+            natural_height = natural_height + child_layout.natural_height + props.spacing
         end
     end
+
+    -- Respect max size constraints if set
+    if layout.max_width then
+        natural_width = math.min(natural_width, layout.max_width)
+    end
+    if layout.max_height then
+        natural_height = math.min(natural_height, layout.max_height)
+    end
+
+    layout.natural_width = natural_width
+    layout.natural_height = natural_height
 end
 
 function widget.compute_children_layout(props_tree, render_tree, id)
@@ -123,9 +145,9 @@ function widget.compute_children_layout(props_tree, render_tree, id)
     -- If there are no expandable children, align the children vertically
     if expand_number == 0 then
         if flagger.test(props.align, const.ALIGN.HORIZON) then
-            offset = math.floor(remaining_height / 2)
+            offset = 1 + math.floor(remaining_height / 2)
         elseif flagger.test(props.align, const.ALIGN.BOTTOM) then
-            offset = remaining_height
+            offset = 1 + remaining_height
         end
     end
 
@@ -137,13 +159,13 @@ function widget.compute_children_layout(props_tree, render_tree, id)
         if child_props.h_expand then
             child_layout.width = layout.width
         else
-            child_layout.width = child_layout.natural_width
+            child_layout.width = math.min(child_layout.natural_width, layout.width)
         end
 
         if child_props.v_expand then
-            child_layout.height = child_layout.natural_height + expand_height
+            child_layout.height = math.min(child_layout.natural_height + expand_height, layout.height)
         else
-            child_layout.height = child_layout.natural_height
+            child_layout.height = math.min(child_layout.natural_height, layout.height)
         end
 
         -- Set default x position
@@ -169,13 +191,11 @@ end
 function widget.draw(props_tree, render_tree, id, term)
     local props = props_tree[id]
 
-    if props.color then
-        term.setBackgroundColor(props.color)
-        term.clear()
-    end
+    term.setBackgroundColor(props.background_color)
+    term.clear()
 end
 
-function widget.handle_event(props_tree, event_tree, id, sch, event)
+function widget.handle_event(props_tree, render_tree, event_tree, id, sch, event)
 end
 
 return widget

@@ -59,16 +59,29 @@ local const   = require("cuicui.const")
 local widget  = {}
 
 widget.PROPS  = {
-    color = { "number", "nil" },
+    background_color = { "number" },
     align = { "number" },
 }
 
 function widget.populate_default_props(props, old_props, event)
+    props.background_color = colors.black
     props.align = const.ALIGN.LEFT + const.ALIGN.TOP
 end
 
-function widget.accept_child(props_tree, id, child_props)
+function widget.accept_child(parent_props, child_props)
     return nil
+end
+
+function widget.compute_children_max_size(props_tree, render_tree, id)
+    local props = props_tree[id]
+    local layout = render_tree[id]
+
+    -- Pass through max size to all children
+    for _, child_id in ipairs(props.children) do
+        local child_layout = render_tree[child_id]
+        child_layout.max_width = layout.max_width
+        child_layout.max_height = layout.max_height
+    end
 end
 
 function widget.compose(props, ui)
@@ -79,17 +92,28 @@ function widget.compute_natural_size(props_tree, render_tree, id)
     local layout = render_tree[id]
 
     -- Set default width and height
-    layout.natural_width = 0
-    layout.natural_height = 0
+    local natural_width = 0
+    local natural_height = 0
 
     -- Iterate over children to compute the size (take the maximum of all children)
     for _, child_id in ipairs(props.children) do
         local child_layout = render_tree[child_id]
 
         -- Update width and height to the maximum
-        layout.natural_width = math.max(layout.natural_width, child_layout.natural_width)
-        layout.natural_height = math.max(layout.natural_height, child_layout.natural_height)
+        natural_width = math.max(natural_width, child_layout.natural_width)
+        natural_height = math.max(natural_height, child_layout.natural_height)
     end
+
+    -- Respect max size constraints if set
+    if layout.max_width then
+        natural_width = math.min(natural_width, layout.max_width)
+    end
+    if layout.max_height then
+        natural_height = math.min(natural_height, layout.max_height)
+    end
+
+    layout.natural_width = natural_width
+    layout.natural_height = natural_height
 end
 
 function widget.compute_children_layout(props_tree, render_tree, id)
@@ -137,13 +161,11 @@ end
 function widget.draw(props_tree, render_tree, id, term)
     local props = props_tree[id]
 
-    if props.color then
-        term.setBackgroundColor(props.color)
-        term.clear()
-    end
+    term.setBackgroundColor(props.background_color)
+    term.clear()
 end
 
-function widget.handle_event(props_tree, event_tree, id, sch, event)
+function widget.handle_event(props_tree, render_tree, event_tree, id, sch, event)
 end
 
 return widget
