@@ -118,5 +118,5 @@ end
 
 -- Stop the multishell
 if term.isColor() then
-    os.queueEvent("terminate")
+    sleep()
 end
